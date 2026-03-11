@@ -162,6 +162,16 @@ export default class Game {
       this.audio.resumeAll();
       this._overlay.classList.remove('active');
       this._overlay.innerHTML = '';
+      this._emitStateChange();
+    };
+
+    this._restart = () => {
+      if (this.state !== STATE.PAUSED) return;
+      this._overlay.classList.remove('active');
+      this._overlay.innerHTML = '';
+      this.audio.stopAll();
+      this._startGame();
+      this._emitStateChange();
     };
 
     window.addEventListener('keydown', (e) => {
@@ -169,22 +179,46 @@ export default class Game {
       e.preventDefault();
 
       if (this.state === STATE.PLAYING) {
-        this.state = STATE.PAUSED;
-        this.audio.pauseAll();
-        this._overlay.classList.add('active');
-        this._overlay.innerHTML = `
-          <div class="message">
-            <div class="pause-text">PAUSED</div>
-            <div class="pause-hint">TAP OR PRESS SPACE</div>
-          </div>
-        `;
+        this.pause();
       } else if (this.state === STATE.PAUSED) {
         this._unpause();
       }
     });
+  }
 
-    // Tap the pause overlay to resume
-    this._overlay.addEventListener('touchend', () => this._unpause());
+  pause() {
+    if (this.state !== STATE.PLAYING) return;
+    this.state = STATE.PAUSED;
+    this.audio.pauseAll();
+    this._overlay.classList.add('active');
+    this._overlay.innerHTML = `
+      <div class="message">
+        <div class="pause-text">PAUSED</div>
+        <div class="pause-actions">
+          <button class="pause-btn resume" data-action="resume">RESUME</button>
+          <button class="pause-btn restart" data-action="restart">RESTART</button>
+          <button class="pause-btn exit" data-action="exit">EXIT GAME</button>
+        </div>
+      </div>
+    `;
+    this._overlay.querySelector('[data-action="resume"]').addEventListener('click', () => this._unpause());
+    this._overlay.querySelector('[data-action="restart"]').addEventListener('click', () => this._restart());
+    this._overlay.querySelector('[data-action="exit"]').addEventListener('click', () => this.exitGame());
+    this._emitStateChange();
+  }
+
+  exitGame() {
+    this.audio.stopAll();
+    this._overlay.classList.remove('active');
+    this._overlay.innerHTML = '';
+    this.input.captureTouch = false;
+    this.input.clear();
+    this._showMenu();
+    this._emitStateChange();
+  }
+
+  _emitStateChange() {
+    window.dispatchEvent(new CustomEvent('pacman:stateChange', { detail: { state: this.state } }));
   }
 
   _checkLevelClear() {
@@ -199,6 +233,7 @@ export default class Game {
 
   _showMenu() {
     this.state = STATE.MENU;
+    this._emitStateChange();
     this._overlay.classList.add('active');
     this._overlay.innerHTML = `
       <div class="message menu-screen">
@@ -236,6 +271,7 @@ export default class Game {
     this._loadLevel(0);
     this._startReady();
     this.audio.play('intro');
+    this._emitStateChange();
   }
 
   _startReady() {
@@ -550,6 +586,7 @@ export default class Game {
 
   _gameOver() {
     this.state = STATE.GAME_OVER;
+    this._emitStateChange();
     this.score.saveHighScore();
     this._submitScore();
     this.audio.stopAll();

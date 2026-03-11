@@ -174,6 +174,29 @@ if (dpad) {
   });
 }
 
+// ── Pause button ─────────────────────────────────────────
+const pauseBtn = document.getElementById('pause-game-btn');
+if (pauseBtn) {
+  pauseBtn.addEventListener('click', () => game.pause());
+}
+
+// ── Game state UI sync (pause btn + dpad visibility) ─────
+const ACTIVE_STATES = ['playing', 'ready', 'dying', 'levelClear'];
+window.addEventListener('pacman:stateChange', (e) => {
+  const { state } = e.detail;
+  const isActive = ACTIVE_STATES.includes(state);
+
+  // Show/hide pause button
+  if (pauseBtn) {
+    pauseBtn.classList.toggle('visible', state === 'playing');
+  }
+
+  // Show/hide D-pad on mobile
+  if (dpad && window.innerWidth <= 768) {
+    dpad.style.display = isActive ? 'grid' : 'none';
+  }
+});
+
 // ── Navbar scroll effect ─────────────────────────────────
 const navbar = document.getElementById('navbar');
 if (navbar) {
