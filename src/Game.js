@@ -203,7 +203,7 @@ export default class Game {
     this.audio.pauseAll();
     this._overlay.classList.add('active');
     this._overlay.innerHTML = `
-      <div class="message">
+      <div class="message overlay-panel">
         <div class="pause-text">PAUSED</div>
         <div class="pause-actions">
           <button class="pause-btn resume" data-action="resume">RESUME</button>
@@ -715,12 +715,15 @@ export default class Game {
     const twitterLink = `https://x.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`;
 
     this._overlay.innerHTML = `
-      <div class="message gameover-screen">
+      <div class="message gameover-screen overlay-panel">
         <div class="go-title">GAME OVER</div>
-        <div class="go-score">SCORE: ${this.score.score.toLocaleString()}</div>
-        <div class="go-high">HIGH SCORE: ${this.score.highScore.toLocaleString()}</div>
+        <div class="go-scores">
+          <div class="go-score">SCORE<span class="go-score-value">${this.score.score.toLocaleString()}</span></div>
+          <div class="go-high">BEST: ${this.score.highScore.toLocaleString()}</div>
+        </div>
+        <div class="go-divider"></div>
         <a class="go-share" href="${twitterLink}" target="_blank" onclick="event.stopPropagation()">SHARE ON X</a>
-        <div class="pause-actions">
+        <div class="go-actions">
           <button class="pause-btn resume" data-action="play-again">PLAY AGAIN</button>
           <button class="pause-btn exit" data-action="exit">EXIT</button>
         </div>
