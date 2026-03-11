@@ -21,7 +21,10 @@ export default class Input {
     this._directionBuffer = null;
     this._touchOrigin = null;
     this._touching = false;
-    this._touchOnCanvas = false;
+
+    // When true, swipes on the game canvas block page scroll.
+    // Game.js sets this to true only during active gameplay.
+    this.captureTouch = false;
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
@@ -52,17 +55,18 @@ export default class Input {
 
   _onTouchStart(e) {
     const t = e.touches[0];
-    // Only capture touches that start on the game canvas or dpad
-    const el = e.target;
-    const gameContainer = document.getElementById('game-container');
-    this._touchOnCanvas = gameContainer && gameContainer.contains(el);
     this._touchOrigin = { x: t.clientX, y: t.clientY };
     this._touching = true;
   }
 
   _onTouchMove(e) {
-    if (!this._touchOrigin || !this._touchOnCanvas) return;
-    e.preventDefault();
+    if (!this._touchOrigin) return;
+
+    // Only block scroll when the game is actively capturing input
+    if (this.captureTouch) {
+      e.preventDefault();
+    }
+
     const t = e.touches[0];
     const dx = t.clientX - this._touchOrigin.x;
     const dy = t.clientY - this._touchOrigin.y;
@@ -93,7 +97,6 @@ export default class Input {
   _onTouchEnd() {
     this._touchOrigin = null;
     this._touching = false;
-    this._touchOnCanvas = false;
   }
 
   // Returns the most recently pressed direction

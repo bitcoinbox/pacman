@@ -357,6 +357,13 @@ export default class Game {
     if (this.particles) this.particles.update(dt);
     if (this.scorePopup) this.scorePopup.update(dt);
 
+    // Only block mobile scroll during active gameplay
+    this.input.captureTouch =
+      this.state === STATE.PLAYING ||
+      this.state === STATE.READY ||
+      this.state === STATE.DYING ||
+      this.state === STATE.LEVEL_CLEAR;
+
     switch (this.state) {
       case STATE.MENU:
         break;
