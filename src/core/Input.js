@@ -21,6 +21,7 @@ export default class Input {
     this._directionBuffer = null;
     this._touchOrigin = null;
     this._touching = false;
+    this._touchOnCanvas = false;
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
@@ -30,9 +31,9 @@ export default class Input {
 
     window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('keyup', this._onKeyUp);
-    window.addEventListener('touchstart', this._onTouchStart, { passive: false });
+    window.addEventListener('touchstart', this._onTouchStart, { passive: true });
     window.addEventListener('touchmove', this._onTouchMove, { passive: false });
-    window.addEventListener('touchend', this._onTouchEnd, { passive: false });
+    window.addEventListener('touchend', this._onTouchEnd, { passive: true });
   }
 
   _onKeyDown(e) {
@@ -51,12 +52,16 @@ export default class Input {
 
   _onTouchStart(e) {
     const t = e.touches[0];
+    // Only capture touches that start on the game canvas or dpad
+    const el = e.target;
+    const gameContainer = document.getElementById('game-container');
+    this._touchOnCanvas = gameContainer && gameContainer.contains(el);
     this._touchOrigin = { x: t.clientX, y: t.clientY };
     this._touching = true;
   }
 
   _onTouchMove(e) {
-    if (!this._touchOrigin) return;
+    if (!this._touchOrigin || !this._touchOnCanvas) return;
     e.preventDefault();
     const t = e.touches[0];
     const dx = t.clientX - this._touchOrigin.x;
@@ -88,6 +93,7 @@ export default class Input {
   _onTouchEnd() {
     this._touchOrigin = null;
     this._touching = false;
+    this._touchOnCanvas = false;
   }
 
   // Returns the most recently pressed direction

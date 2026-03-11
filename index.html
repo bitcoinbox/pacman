@@ -573,7 +573,6 @@
       background: linear-gradient(135deg, rgba(33,33,222,0.2), rgba(0,255,255,0.1), rgba(33,33,222,0.2));
       animation: borderGlow 4s ease-in-out infinite;
       max-width: calc(100vw - 32px);
-      touch-action: none;
     }
 
     .game-frame-inner {
@@ -585,13 +584,13 @@
     #game-container {
       position: relative;
       line-height: 0;
-      touch-action: none;
     }
 
     #game-container canvas {
       display: block;
       max-width: 100%;
       height: auto !important;
+      touch-action: none;
     }
 
     /* ─── OVERLAY (in-game menus) ─── */
