@@ -65,6 +65,11 @@ export default class Game {
     this._wallet = null;
     this._sessionId = null;
 
+    // Power-ups
+    this._powerUp = null;         // { type, tile, timer }
+    this._powerUpEffect = null;   // { type, timer }
+    this._powerUpSpawnTimer = 0;
+
     this._setupEvents();
     this._setupPause();
   }
@@ -262,13 +267,28 @@ export default class Game {
     this.ghosts = [];
     this._spawnGhosts();
 
-    // Clear effects
+    // Clear effects and power-ups
     if (this.particles) this.particles.clear();
     if (this.scorePopup) this.scorePopup.clear();
+    this._powerUp = null;
+    this._powerUpEffect = null;
+    this._powerUpSpawnTimer = 20;
+    this.score._multiplier = 1;
 
     this.hud.updateScore(this.score.score);
     this.hud.updateHighScore(this.score.highScore);
     this.hud.updateLives(this.score.lives);
+  }
+
+  _getLevelDifficulty() {
+    const lvl = this.score.level;
+    // Speed ramps: 120 base, +4 per level, cap at 180
+    const speed = Math.min(120 + (lvl - 1) * 4, 180);
+    // Frightened time shrinks: 6s base, -0.4 per level, min 1.5s
+    const frightenedTime = Math.max(6 - (lvl - 1) * 0.4, 1.5);
+    // Ghost exit wait times shrink with level
+    const waitScale = Math.max(1 - (lvl - 1) * 0.08, 0.3);
+    return { speed, frightenedTime, waitScale };
   }
 
   _spawnGhosts() {
@@ -278,11 +298,13 @@ export default class Game {
     const houseExit = this.map.houseExit;
     if (!houseExit) return;
 
+    const diff = this._getLevelDifficulty();
+
     // Blinky — starts at exit tile, immediately active
     const blinky = new Ghost('blinky', this.map, {
-      speed: 120,
+      speed: diff.speed,
       waitTime: 0,
-      frightenedTime: 6,
+      frightenedTime: diff.frightenedTime,
       scatterTarget: this.map.getTileByGrid(25, 0),
       player: this.player
     });
@@ -292,9 +314,9 @@ export default class Game {
 
     // Pinky — in house center, exits quickly
     const pinky = new Ghost('pinky', this.map, {
-      speed: 120,
-      waitTime: 2,
-      frightenedTime: 6,
+      speed: diff.speed,
+      waitTime: 2 * diff.waitScale,
+      frightenedTime: diff.frightenedTime,
       scatterTarget: this.map.getTileByGrid(2, 0),
       player: this.player
     });
@@ -302,9 +324,9 @@ export default class Game {
 
     // Inky — in house, offset left
     const inky = new Ghost('inky', this.map, {
-      speed: 120,
-      waitTime: 6,
-      frightenedTime: 6,
+      speed: diff.speed,
+      waitTime: 6 * diff.waitScale,
+      frightenedTime: diff.frightenedTime,
       scatterTarget: this.map.getTileByGrid(27, 35),
       player: this.player,
       blinky: blinky
@@ -314,9 +336,9 @@ export default class Game {
 
     // Sue — in house, offset right
     const sue = new Ghost('sue', this.map, {
-      speed: 120,
-      waitTime: 8,
-      frightenedTime: 6,
+      speed: diff.speed,
+      waitTime: 8 * diff.waitScale,
+      frightenedTime: diff.frightenedTime,
       scatterTarget: this.map.getTileByGrid(0, 35),
       player: this.player
     });
@@ -395,14 +417,30 @@ export default class Game {
     const dir = this.input.getDirection();
     if (dir) this.player.setDirection(dir);
 
+    // Apply speed boost power-up
+    const speedMul = (this._powerUpEffect?.type === 'speed') ? 1.35 : 1;
+    const origSpeed = this.player.speed;
+    if (speedMul !== 1) this.player.speed = origSpeed * speedMul;
+
     // Update entities
     this.player.update(dt);
-    for (const ghost of this.ghosts) {
-      ghost.update(dt);
+
+    // Restore original speed
+    if (speedMul !== 1) this.player.speed = origSpeed;
+
+    // Ghost freeze power-up: skip ghost updates
+    const ghostsFrozen = this._powerUpEffect?.type === 'freeze';
+    if (!ghostsFrozen) {
+      for (const ghost of this.ghosts) {
+        ghost.update(dt);
+      }
     }
 
     // Check collisions
     this.collision.check(this.player, this.ghosts, this.map);
+
+    // Power-up spawning
+    this._updatePowerUps(dt);
 
     // Stop frightened music when no ghosts are frightened
     const anyFrightened = this.ghosts.some(g => g.isFrightened());
@@ -415,7 +453,81 @@ export default class Game {
     this.hud.updateHighScore(this.score.highScore);
   }
 
+  _updatePowerUps(dt) {
+    // Spawn timer
+    this._powerUpSpawnTimer -= dt;
+    if (this._powerUpSpawnTimer <= 0 && !this._powerUp) {
+      this._spawnPowerUp();
+      this._powerUpSpawnTimer = 15 + Math.random() * 10; // 15-25s between spawns
+    }
+
+    // Despawn timer for uncollected power-up
+    if (this._powerUp) {
+      this._powerUp.timer -= dt;
+      if (this._powerUp.timer <= 0) {
+        this._powerUp = null;
+      } else {
+        // Check collection
+        const pt = this._powerUp.tile;
+        const dx = this.player.x - pt.x;
+        const dy = this.player.y - pt.y;
+        if (Math.sqrt(dx * dx + dy * dy) < TILE * 0.8) {
+          this._collectPowerUp(this._powerUp);
+          this._powerUp = null;
+        }
+      }
+    }
+
+    // Active effect timer
+    if (this._powerUpEffect) {
+      this._powerUpEffect.timer -= dt;
+      if (this._powerUpEffect.timer <= 0) {
+        if (this._powerUpEffect.type === 'multiplier') {
+          this.score._multiplier = 1;
+        }
+        this._powerUpEffect = null;
+      }
+    }
+  }
+
+  _spawnPowerUp() {
+    // Find random empty walkable tile that has no item
+    const candidates = this.map.tiles.filter(t =>
+      !t.isWall() && !t.isHouse() && !t.isTunnel() && !t.hasItem && t.code !== 'h'
+    );
+    if (candidates.length === 0) return;
+    const tile = candidates[Math.floor(Math.random() * candidates.length)];
+    const types = ['speed', 'multiplier', 'freeze'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    this._powerUp = { type, tile, timer: 10 }; // 10s to collect
+  }
+
+  _collectPowerUp(pu) {
+    this._powerUpEffect = { type: pu.type, timer: 6 }; // 6s duration
+
+    // Score multiplier applies immediately
+    if (pu.type === 'multiplier') {
+      this.score._multiplier = 2;
+    }
+
+    // Visual feedback
+    const colors = { speed: 0x00FF88, multiplier: 0xFFCC00, freeze: 0x00CCFF };
+    this.particles.emit(pu.tile.x, pu.tile.y, {
+      count: 12, speed: 100, life: 0.6,
+      color: colors[pu.type], size: 4, gravity: 0
+    });
+    this.scorePopup.show(pu.tile.x, pu.tile.y - 10,
+      pu.type === 'speed' ? 'SPEED!' : pu.type === 'multiplier' ? '2X!' : 'FREEZE!',
+      colors[pu.type]
+    );
+    this.screenFx.flash(colors[pu.type], 0.12);
+    this.audio.play('bonus');
+  }
+
   _render(alpha) {
+    // Pass power-up state to renderer
+    this.pelletRenderer.setPowerUp(this._powerUp);
+
     // Update renderers
     this.pelletRenderer.update(1 / 60);
     this.entityRenderer.update(1 / 60);
@@ -436,11 +548,16 @@ export default class Game {
     this.audio.stopAll();
 
     this._overlay.classList.add('active');
+    const tweetText = encodeURIComponent(`I scored ${this.score.score.toLocaleString()} on $PACMAN! Can you beat it?\n\nPlay now:`);
+    const tweetUrl = encodeURIComponent(window.location.origin);
+    const twitterLink = `https://x.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`;
+
     this._overlay.innerHTML = `
       <div class="message gameover-screen">
         <div class="go-title">GAME OVER</div>
-        <div class="go-score">SCORE: ${this.score.score}</div>
-        <div class="go-high">HIGH SCORE: ${this.score.highScore}</div>
+        <div class="go-score">SCORE: ${this.score.score.toLocaleString()}</div>
+        <div class="go-high">HIGH SCORE: ${this.score.highScore.toLocaleString()}</div>
+        <a class="go-share" href="${twitterLink}" target="_blank" onclick="event.stopPropagation()">SHARE ON X</a>
         <div class="go-restart">TAP OR PRESS ANY KEY</div>
       </div>
     `;

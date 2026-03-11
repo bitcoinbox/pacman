@@ -102,6 +102,78 @@ if (wallet) {
   wallet.onAuth(() => loadLeaderboard());
 }
 
+// ── Daily Challenge ──────────────────────────────────────
+const dailyDesc = document.getElementById('daily-desc');
+const dailyStreak = document.getElementById('daily-streak');
+
+async function loadDailyChallenge() {
+  if (!dailyDesc) return;
+  try {
+    const walletAddr = wallet?.getAddress() || '';
+    const res = await fetch(`/api/daily?wallet=${walletAddr}`);
+    const data = await res.json();
+    if (data.challenge) {
+      const c = data.challenge;
+      const typeNames = {
+        target_score: `Score ${c.target?.toLocaleString()} points`,
+        speed_run: `Clear level in ${c.target}s`,
+        ghost_hunter: `Eat ${c.target} ghosts`,
+        dot_collector: 'Eat all dots without dying'
+      };
+      dailyDesc.textContent = typeNames[c.type] || c.type;
+      if (c.specialRule === 'speed_mode') dailyDesc.textContent += ' (SPEED MODE)';
+      if (c.specialRule === 'no_power_pills') dailyDesc.textContent += ' (NO POWER PILLS)';
+    }
+    if (data.streak > 0) {
+      dailyStreak.textContent = `STREAK: ${data.streak}`;
+    }
+  } catch {
+    if (dailyDesc) dailyDesc.textContent = 'Connect wallet to play';
+  }
+}
+loadDailyChallenge();
+
+// ── Sound toggle ──────────────────────────────────────────
+const soundToggle = document.getElementById('sound-toggle');
+if (soundToggle) {
+  soundToggle.addEventListener('click', () => {
+    const muted = game.audio.toggle();
+    soundToggle.classList.toggle('muted', muted);
+    soundToggle.querySelector('.sound-icon.on').style.display = muted ? 'none' : 'block';
+    soundToggle.querySelector('.sound-icon.off').style.display = muted ? 'block' : 'none';
+  });
+}
+
+// ── D-Pad (mobile) ───────────────────────────────────────
+const dpad = document.getElementById('dpad');
+if (dpad) {
+  dpad.querySelectorAll('.dpad-btn').forEach(btn => {
+    const dir = btn.dataset.dir;
+    const sendDir = () => {
+      if (game.input) {
+        game.input._lastDirection = dir;
+        game.input._directionBuffer = dir;
+      }
+    };
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      btn.classList.add('pressed');
+      sendDir();
+    }, { passive: false });
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      btn.classList.remove('pressed');
+    }, { passive: false });
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      btn.classList.add('pressed');
+      sendDir();
+    });
+    btn.addEventListener('mouseup', () => btn.classList.remove('pressed'));
+    btn.addEventListener('mouseleave', () => btn.classList.remove('pressed'));
+  });
+}
+
 // ── Navbar scroll effect ─────────────────────────────────
 const navbar = document.getElementById('navbar');
 if (navbar) {
@@ -299,7 +371,7 @@ if (scrollArrow) {
 }
 
 // ── Section fade-in on scroll ──────────────────────────
-document.querySelectorAll('#leaderboard, #about, #how, #links').forEach(section => {
+document.querySelectorAll('#leaderboard, #about, #chart, #how, #links').forEach(section => {
   gsap.from(section, {
     opacity: 0, y: 40,
     duration: 0.9, ease: 'power3.out',

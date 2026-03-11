@@ -9,6 +9,7 @@ export default class Score {
     this.level = 1;
     this._ghostCombo = 0;
     this._extraLifeGiven = false;
+    this._multiplier = 1;
   }
 
   reset() {
@@ -17,6 +18,7 @@ export default class Score {
     this.level = 1;
     this._ghostCombo = 0;
     this._extraLifeGiven = false;
+    this._multiplier = 1;
   }
 
   addDotScore() {
@@ -45,7 +47,7 @@ export default class Score {
   }
 
   _addScore(points) {
-    this.score += points;
+    this.score += points * this._multiplier;
     if (!this._extraLifeGiven && this.score >= EXTRA_LIFE_SCORE) {
       this._extraLifeGiven = true;
       this.lives++;

@@ -780,6 +780,143 @@
       box-shadow: 0 0 20px rgba(0,255,255,0.1);
     }
 
+    /* ── Contract Address ── */
+    .contract-address-wrap {
+      margin-top: 28px;
+      text-align: center;
+    }
+    .contract-label {
+      font-size: 0.35em;
+      color: #555;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .contract-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border: 1px solid rgba(255,224,0,0.15);
+      border-radius: 6px;
+      background: rgba(255,224,0,0.03);
+      transition: all 0.3s ease;
+    }
+    .contract-field:hover {
+      border-color: rgba(255,224,0,0.35);
+      background: rgba(255,224,0,0.05);
+      box-shadow: 0 0 16px rgba(255,224,0,0.06);
+    }
+    .contract-addr {
+      font-size: 0.4em;
+      color: var(--gold);
+      letter-spacing: 1px;
+      word-break: break-all;
+      user-select: all;
+    }
+    .copy-btn {
+      background: none;
+      border: 1px solid rgba(255,224,0,0.2);
+      border-radius: 4px;
+      color: var(--gold);
+      cursor: pointer;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .copy-btn:hover {
+      background: rgba(255,224,0,0.1);
+      border-color: rgba(255,224,0,0.5);
+    }
+    .copy-feedback {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.3em;
+      color: var(--cyan);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .copy-feedback.show {
+      opacity: 1;
+    }
+
+    /* ────────────────────────────────────
+       CHART SECTION
+    ──────────────────────────────────── */
+    #chart {
+      padding: 80px 24px;
+      background: var(--darker);
+      overflow: hidden;
+    }
+    .chart-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .chart-label {
+      font-size: 0.5em;
+      color: var(--gold);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      text-shadow: 0 0 8px rgba(255,224,0,0.3);
+    }
+    .chart-container {
+      width: 100%;
+      min-height: 420px;
+      border-radius: 10px;
+      border: 1px solid rgba(33,33,222,0.2);
+      background: rgba(8,8,14,0.9);
+      box-shadow: 0 0 30px rgba(33,33,222,0.08), 0 0 60px rgba(33,33,222,0.04);
+      animation: borderGlow 4s ease-in-out infinite;
+      overflow: hidden;
+      position: relative;
+    }
+    .chart-container iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 420px;
+      border: none;
+      border-radius: 10px;
+    }
+    .chart-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 420px;
+      gap: 16px;
+    }
+    .chart-placeholder-icon {
+      font-size: 2.5em;
+      opacity: 0.3;
+    }
+    .chart-placeholder-text {
+      font-size: 0.6em;
+      color: var(--cyan);
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px var(--cyan);
+    }
+    .chart-placeholder-sub {
+      font-size: 0.3em;
+      color: #444;
+      line-height: 2;
+      max-width: 320px;
+    }
+    @media (max-width: 600px) {
+      .chart-container {
+        min-height: 320px;
+      }
+      .chart-placeholder {
+        min-height: 320px;
+      }
+      .chart-container iframe {
+        min-height: 320px;
+      }
+    }
+
     /* ────────────────────────────────────
        HOW IT WORKS
     ──────────────────────────────────── */
@@ -1119,6 +1256,117 @@
       animation: lbSlideIn 0.3s ease-out both;
     }
 
+    /* ─── DAILY CHALLENGE ─── */
+    .daily-challenge {
+      margin-top: 24px;
+      padding: 16px 24px;
+      background: rgba(255,215,0,0.04);
+      border: 1px solid rgba(255,215,0,0.12);
+      border-radius: 8px;
+      text-align: center;
+      max-width: 450px;
+      position: relative;
+      z-index: 2;
+    }
+    .daily-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .daily-label {
+      font-size: 0.45em;
+      color: var(--gold);
+      letter-spacing: 2px;
+    }
+    .daily-streak {
+      font-size: 0.38em;
+      color: var(--cyan);
+    }
+    .daily-desc {
+      font-size: 0.38em;
+      color: #888;
+      line-height: 1.8;
+    }
+
+    /* ─── SOUND TOGGLE ─── */
+    .sound-toggle {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      color: #666;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      margin-left: auto;
+      padding: 6px;
+    }
+    .sound-toggle:hover { color: var(--cyan); border-color: rgba(0,255,255,0.3); }
+    .sound-toggle.muted { color: #444; }
+    .sound-icon { width: 18px; height: 18px; }
+
+    /* ─── GAME OVER SHARE ─── */
+    .go-share {
+      display: inline-block;
+      padding: 10px 24px;
+      margin: 16px 0;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(0.3em, 1.2vw, 0.55em);
+      color: #000;
+      background: var(--cyan);
+      border-radius: 4px;
+      text-decoration: none;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .go-share:hover {
+      background: #fff;
+      box-shadow: 0 0 20px rgba(0,255,255,0.4);
+      transform: translateY(-2px);
+    }
+
+    /* ─── D-PAD ─── */
+    .dpad {
+      display: none;
+      grid-template-columns: 60px 60px 60px;
+      grid-template-rows: 60px 60px 60px;
+      gap: 4px;
+      margin: 24px auto 0;
+      width: 188px;
+      z-index: 2;
+      position: relative;
+    }
+    .dpad-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #666;
+      font-size: 1.2em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .dpad-btn:active, .dpad-btn.pressed {
+      background: rgba(0,255,255,0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    .dpad-up { grid-column: 2; grid-row: 1; }
+    .dpad-left { grid-column: 1; grid-row: 2; }
+    .dpad-center { grid-column: 2; grid-row: 2; background: rgba(255,255,255,0.02); border-radius: 8px; }
+    .dpad-right { grid-column: 3; grid-row: 2; }
+    .dpad-down { grid-column: 2; grid-row: 3; }
+
     /* ────────────────────────────────────
        RESPONSIVE
     ──────────────────────────────────── */
@@ -1131,6 +1379,7 @@
       .about-stats { gap: 24px; }
       .how-grid { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; }
       .link-btn { padding: 14px 24px; font-size: 0.42em; }
+      .dpad { display: grid; }
       .lb-row { font-size: 0.4em; padding: 8px 12px; }
       .lb-player-addr { display: none; }
       .lb-my-rank { flex-direction: column; gap: 8px; text-align: center; }
@@ -1162,8 +1411,13 @@
         <a href="#game-section">GAME</a>
         <a href="#leaderboard">RANKS</a>
         <a href="#about">TOKEN</a>
+        <a href="#chart">CHART</a>
         <a href="#links">COMMUNITY</a>
       </div>
+      <button class="sound-toggle" id="sound-toggle" title="Toggle sound">
+        <svg class="sound-icon on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.08"/></svg>
+        <svg class="sound-icon off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+      </button>
       <div class="nav-wallet-wrap">
         <button class="wallet-btn" id="wallet-btn">CONNECT WALLET</button>
       </div>
@@ -1235,6 +1489,22 @@
       </div>
     </div>
     <div class="game-controls">SWIPE TO MOVE · ARROW KEYS / WASD</div>
+    <div class="dpad" id="dpad">
+      <button class="dpad-btn dpad-up" data-dir="u">&#9650;</button>
+      <button class="dpad-btn dpad-left" data-dir="l">&#9664;</button>
+      <div class="dpad-center"></div>
+      <button class="dpad-btn dpad-right" data-dir="r">&#9654;</button>
+      <button class="dpad-btn dpad-down" data-dir="d">&#9660;</button>
+    </div>
+
+    <!-- Daily Challenge Banner -->
+    <div class="daily-challenge" id="daily-challenge">
+      <div class="daily-header">
+        <span class="daily-label">DAILY CHALLENGE</span>
+        <span class="daily-streak" id="daily-streak"></span>
+      </div>
+      <div class="daily-desc" id="daily-desc">Loading...</div>
+    </div>
   </section>
 
   <div class="section-divider"></div>
@@ -1293,7 +1563,7 @@
           <span class="stat-label">DOTS PER LEVEL</span>
         </div>
         <div class="stat">
-          <span class="stat-value">4</span>
+          <span class="stat-value">10</span>
           <span class="stat-label">UNIQUE MAZES</span>
         </div>
         <div class="stat">
@@ -1302,6 +1572,35 @@
         </div>
       </div>
       <div class="token-badge">$PACMAN on Solana</div>
+      <div class="contract-address-wrap">
+        <div class="contract-label">CONTRACT ADDRESS</div>
+        <div class="contract-field">
+          <span class="contract-addr" id="contract-addr">COMING_SOON</span>
+          <button class="copy-btn" id="copy-ca-btn" title="Copy to clipboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <span class="copy-feedback" id="copy-feedback">COPIED!</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ═══════════ CHART ═══════════ -->
+  <section id="chart">
+    <div class="chart-wrap">
+      <div class="chart-label">LIVE CHART</div>
+      <div class="chart-container" id="chart-container">
+        <div class="chart-placeholder" id="chart-placeholder">
+          <div class="chart-placeholder-icon">&#x1F4C8;</div>
+          <div class="chart-placeholder-text">CHART COMING SOON</div>
+          <div class="chart-placeholder-sub">DexScreener embed will appear here once the token is live</div>
+        </div>
+        <!-- Uncomment and set the real pair address when live:
+        <iframe id="dexscreener-embed" src="https://dexscreener.com/solana/YOUR_PAIR_ADDRESS?embed=1&theme=dark" style="width:100%;height:100%;border:none;"></iframe>
+        -->
+      </div>
     </div>
   </section>
 
@@ -1350,6 +1649,17 @@
     </p>
   </footer>
 
+  <script>
+    // ── Copy contract address ──
+    document.getElementById('copy-ca-btn')?.addEventListener('click', () => {
+      const addr = document.getElementById('contract-addr').textContent;
+      navigator.clipboard.writeText(addr).then(() => {
+        const fb = document.getElementById('copy-feedback');
+        fb.classList.add('show');
+        setTimeout(() => fb.classList.remove('show'), 1600);
+      });
+    });
+  </script>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

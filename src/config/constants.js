@@ -80,4 +80,10 @@ export const MAZE_THEMES = [
   { wall: 0xFFB8FF, glow: 0xFF66CC },  // pink
   { wall: 0xFF6644, glow: 0xFF4422 },  // red/orange
   { wall: 0x00CC88, glow: 0x00FFAA },  // green
+  { wall: 0x9933FF, glow: 0xBB66FF },  // purple
+  { wall: 0xFFCC00, glow: 0xFFDD44 },  // gold
+  { wall: 0x00CCCC, glow: 0x00FFFF },  // cyan
+  { wall: 0xFF3366, glow: 0xFF6699 },  // magenta
+  { wall: 0x88CC00, glow: 0xAAFF22 },  // lime
+  { wall: 0xFF8800, glow: 0xFFAA33 },  // orange
 ];

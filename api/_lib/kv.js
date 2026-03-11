@@ -88,3 +88,142 @@ export async function getPlayerRank(wallet, period = 'alltime') {
   const score = await kv.zscore(key, wallet);
   return { rank: rank !== null ? rank + 1 : null, score: score ? Number(score) : 0 };
 }
+
+// ── Daily Challenges ────────────────────────────────
+
+const CHALLENGE_TYPES = [
+  { type: 'target_score', label: 'Target Score', description: 'Reach the target score' },
+  { type: 'speed_run', label: 'Speed Run', description: 'Complete the level before time runs out' },
+  { type: 'ghost_hunter', label: 'Ghost Hunter', description: 'Eat the required number of ghosts' },
+  { type: 'dot_collector', label: 'Dot Collector', description: 'Eat all dots without dying' },
+];
+
+const SPECIAL_RULES = [
+  null,                   // no special rule
+  'no_power_pills',      // power pills disabled
+  'speed_mode',          // everything moves faster
+  'no_power_pills',
+  null,
+  'speed_mode',
+  null,
+];
+
+// Simple deterministic hash from a string → integer
+function seedFromDate(dateStr) {
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = ((hash << 5) - hash + dateStr.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+// Seeded pseudo-random (returns 0-1 float, advances seed)
+function seededRandom(seed) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function generateChallenge(dateStr) {
+  const seed = seedFromDate(dateStr);
+  const typeIndex = seed % CHALLENGE_TYPES.length;
+  const challenge = { ...CHALLENGE_TYPES[typeIndex] };
+
+  const r1 = seededRandom(seed + 1);
+  const r2 = seededRandom(seed + 2);
+
+  switch (challenge.type) {
+    case 'target_score':
+      // Target between 5000-25000, rounded to nearest 500
+      challenge.target = Math.round((5000 + r1 * 20000) / 500) * 500;
+      break;
+    case 'speed_run':
+      // Time limit between 60-180 seconds
+      challenge.timeLimitSeconds = Math.round(60 + r1 * 120);
+      break;
+    case 'ghost_hunter':
+      // Eat between 8-24 ghosts
+      challenge.target = Math.round(8 + r1 * 16);
+      break;
+    case 'dot_collector':
+      // No extra params — eat all dots without dying
+      break;
+  }
+
+  // Maze index 0-3
+  challenge.mazeIndex = Math.floor(r2 * 4);
+
+  // Special rule based on day
+  const ruleIndex = seed % SPECIAL_RULES.length;
+  challenge.specialRule = SPECIAL_RULES[ruleIndex];
+
+  challenge.date = dateStr;
+  return challenge;
+}
+
+export async function getDailyChallenge(dateStr) {
+  const key = `daily:${dateStr}`;
+  const cached = await kv.get(key);
+  if (cached) {
+    return typeof cached === 'string' ? JSON.parse(cached) : cached;
+  }
+
+  const challenge = generateChallenge(dateStr);
+  // Cache for 48 hours
+  await kv.set(key, JSON.stringify(challenge), { ex: 172800 });
+  return challenge;
+}
+
+export async function submitDailyChallenge(wallet, dateStr, score) {
+  const challenge = await getDailyChallenge(dateStr);
+  const completionKey = `daily:done:${dateStr}:${wallet}`;
+
+  // Check if already completed
+  const already = await kv.get(completionKey);
+  if (already) {
+    return { alreadyCompleted: true, streak: await getDailyStreak(wallet) };
+  }
+
+  // Mark as completed (expires in 48h)
+  await kv.set(completionKey, JSON.stringify({ score, completedAt: Date.now() }), { ex: 172800 });
+
+  // Update streak
+  const streakKey = `daily:streak:${wallet}`;
+  const streakData = await kv.get(streakKey);
+  const streak = streakData
+    ? (typeof streakData === 'string' ? JSON.parse(streakData) : streakData)
+    : { count: 0, lastDate: null };
+
+  // Check if yesterday was the last completion (streak continues)
+  const yesterday = getDateStr(new Date(new Date(dateStr + 'T00:00:00Z').getTime() - 86400000));
+  if (streak.lastDate === yesterday) {
+    streak.count += 1;
+  } else if (streak.lastDate === dateStr) {
+    // Same day, no change
+  } else {
+    // Streak broken, start fresh
+    streak.count = 1;
+  }
+  streak.lastDate = dateStr;
+
+  await kv.set(streakKey, JSON.stringify(streak));
+  return { alreadyCompleted: false, streak: streak.count };
+}
+
+export async function getDailyStreak(wallet) {
+  const streakKey = `daily:streak:${wallet}`;
+  const streakData = await kv.get(streakKey);
+  if (!streakData) return 0;
+  const streak = typeof streakData === 'string' ? JSON.parse(streakData) : streakData;
+
+  // Check if streak is still active (last completion was today or yesterday)
+  const today = getDateStr(new Date());
+  const yesterday = getDateStr(new Date(Date.now() - 86400000));
+  if (streak.lastDate !== today && streak.lastDate !== yesterday) {
+    return 0; // Streak expired
+  }
+  return streak.count;
+}
+
+function getDateStr(date) {
+  return date.toISOString().split('T')[0];
+}

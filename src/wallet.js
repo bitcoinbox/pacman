@@ -104,12 +104,27 @@ export default class Wallet {
       ? `<div class="wallet-dd-stat">GAMES: ${this.player.totalGames}</div>`
       : '';
 
+    const refCode = this.address ? this.address.slice(0, 8).toUpperCase() : '';
+    const refLink = `${window.location.origin}?ref=${refCode}`;
+
     dd.innerHTML = `
       ${nick}
       <div class="wallet-dd-addr">${this.address}</div>
       ${best}${games}
+      <div class="wallet-dd-stat" style="margin-top:4px;border-top:1px solid #222;padding-top:8px">REFERRAL CODE</div>
+      <button class="wallet-dd-item ref-copy" data-link="${refLink}" style="color:var(--cyan)">${refCode}</button>
       <button class="wallet-dd-item disconnect">DISCONNECT</button>
     `;
+
+    const refCopyBtn = dd.querySelector('.ref-copy');
+    if (refCopyBtn) {
+      refCopyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(refCopyBtn.dataset.link).then(() => {
+          refCopyBtn.textContent = 'COPIED!';
+          setTimeout(() => { refCopyBtn.textContent = refCode; }, 1500);
+        });
+      });
+    }
 
     dd.querySelector('.disconnect').addEventListener('click', () => {
       this._disconnect();
@@ -214,9 +229,10 @@ export default class Wallet {
       this._saveSession();
       this._emitAuth();
 
-      // If new player, show nickname modal
+      // If new player, show nickname modal + track referral
       if (data.isNew || !data.player.nickname) {
         this._showNicknameModal();
+        this._trackReferral();
       }
     } catch (err) {
       if (err.code !== 4001) {
@@ -347,6 +363,22 @@ export default class Wallet {
       this.btn.textContent = 'CONNECT WALLET';
       this.btn.classList.remove('connected');
     }
+  }
+
+  async _trackReferral() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (!ref || !this.token) return;
+      await fetch(`${API}/referral`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ referrerCode: ref }),
+      });
+    } catch {}
   }
 
   // ── Public API for game integration ──────────────
