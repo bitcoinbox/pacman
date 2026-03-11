@@ -5,7 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>$PACMAN — The Arcade Memecoin</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="description" content="$PACMAN — The premium arcade memecoin. Play the game. Join the movement." />
+  <meta name="description" content="$PACMAN — The premium arcade memecoin on Solana. Play the game. Join the movement." />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="$PACMAN — The Arcade Memecoin" />
+  <meta property="og:description" content="The first memecoin you can actually play. Eat dots. Chase ghosts. Buy dips." />
+  <meta property="og:image" content="/img/og.png" />
+  <meta property="og:url" content="https://pacman.game" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="$PACMAN — The Arcade Memecoin" />
+  <meta name="twitter:description" content="The first memecoin you can actually play. Eat dots. Chase ghosts. Buy dips." />
+  <meta name="twitter:image" content="/img/og.png" />
+
   <style>
     @font-face {
       font-family: 'Press Start 2P';
@@ -1884,6 +1898,12 @@
       if (url) a.href = url;
       else if (a.href === '#' || a.href.endsWith('#')) a.style.opacity = '0.4';
     });
+    // Hero BUY button
+    const heroBuyBtn = document.querySelector('.hero-btn.buy');
+    if (heroBuyBtn) {
+      if (TOKEN_CONFIG.buyLink) heroBuyBtn.href = TOKEN_CONFIG.buyLink;
+      else heroBuyBtn.style.opacity = '0.4';
+    }
 
     // ── Copy contract address ──
     document.getElementById('copy-ca-btn')?.addEventListener('click', () => {

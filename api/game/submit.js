@@ -76,6 +76,7 @@ export default async function handler(req, res) {
   // Save replay data for new best scores (max 50KB)
   if (isNewBest && replay && typeof replay === 'string' && replay.length < 50000) {
     await saveReplay(wallet, replay);
+    await setPlayer(wallet, { hasReplay: true });
   }
 
   return res.status(200).json({

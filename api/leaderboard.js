@@ -1,4 +1,4 @@
-import { getLeaderboard, getPlayerRank, getPlayer, getReplay } from './_lib/kv.js';
+import { getLeaderboard, getPlayerRank, getPlayer } from './_lib/kv.js';
 import { handleCors } from './_lib/auth.js';
 
 export default async function handler(req, res) {
@@ -23,16 +23,13 @@ export default async function handler(req, res) {
   // Enrich with nicknames
   const enriched = await Promise.all(
     entries.map(async (entry, i) => {
-      const [player, replay] = await Promise.all([
-        getPlayer(entry.wallet),
-        getReplay(entry.wallet),
-      ]);
+      const player = await getPlayer(entry.wallet);
       return {
         rank: i + 1,
         wallet: entry.wallet,
         nickname: player?.nickname || '',
         score: entry.score,
-        hasReplay: !!replay,
+        hasReplay: !!player?.hasReplay,
       };
     })
   );
