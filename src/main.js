@@ -182,19 +182,40 @@ if (pauseBtn) {
 
 // ── Game state UI sync (pause btn + dpad visibility) ─────
 const ACTIVE_STATES = ['playing', 'ready', 'dying', 'levelClear'];
+const isMobile = window.innerWidth <= 768;
+let gameSectionInView = false;
+let currentGameState = 'menu';
+
+// Track game section visibility
+const gameSection = document.getElementById('game-section');
+if (gameSection && isMobile) {
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      gameSectionInView = entry.isIntersecting;
+      updateDpadVisibility();
+    },
+    { threshold: 0.3 }
+  );
+  observer.observe(gameSection);
+}
+
+function updateDpadVisibility() {
+  if (!dpad || !isMobile) return;
+  const isActive = ACTIVE_STATES.includes(currentGameState);
+  const shouldShow = isActive && gameSectionInView;
+  dpad.style.display = shouldShow ? 'grid' : 'none';
+}
+
 window.addEventListener('pacman:stateChange', (e) => {
   const { state } = e.detail;
-  const isActive = ACTIVE_STATES.includes(state);
+  currentGameState = state;
 
   // Show/hide pause button
   if (pauseBtn) {
     pauseBtn.classList.toggle('visible', state === 'playing');
   }
 
-  // Show/hide D-pad on mobile
-  if (dpad && window.innerWidth <= 768) {
-    dpad.style.display = isActive ? 'grid' : 'none';
-  }
+  updateDpadVisibility();
 });
 
 // ── Navbar scroll effect ─────────────────────────────────
