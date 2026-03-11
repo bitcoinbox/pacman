@@ -411,6 +411,7 @@ export default class Game {
           this._overlay.classList.remove('active');
           this._overlay.innerHTML = '';
           this.audio.play('back');
+          this._emitStateChange();
         }
         break;
 

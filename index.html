@@ -604,7 +604,7 @@
       font-family: 'Press Start 2P', monospace;
       color: #fff;
     }
-    #overlay.active { pointer-events: auto; }
+    #overlay.active { pointer-events: auto; background: rgba(0,0,0,0.75); }
     #overlay .message {
       text-align: center;
       font-size: clamp(0.5em, 2.5vw, 1.2em);
@@ -721,23 +721,37 @@
       position: fixed;
       top: 14px;
       right: 80px;
-      z-index: 101;
-      background: rgba(8,8,14,0.7);
+      z-index: 1001;
+      background: rgba(8,8,14,0.85);
       backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 4px;
-      color: #888;
-      width: 36px;
-      height: 36px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #ccc;
+      width: 44px;
+      height: 44px;
       cursor: pointer;
       align-items: center;
       justify-content: center;
-      font-size: 1em;
+      font-size: 1.2em;
       transition: all 0.2s;
       -webkit-tap-highlight-color: transparent;
     }
     .pause-game-btn.visible { display: flex; }
     .pause-game-btn:hover { color: var(--cyan); border-color: rgba(0,255,255,0.3); }
+    @media (max-width: 768px) {
+      .pause-game-btn {
+        top: auto;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 260px);
+        right: 16px;
+        width: 52px;
+        height: 52px;
+        font-size: 1.5em;
+        border-radius: 50%;
+        background: rgba(8,8,14,0.9);
+        border: 2px solid rgba(255,255,255,0.2);
+        color: #fff;
+      }
+    }
 
     .game-controls {
       margin-top: 24px;
