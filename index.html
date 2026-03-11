@@ -572,6 +572,7 @@
       border-radius: 8px;
       background: linear-gradient(135deg, rgba(33,33,222,0.2), rgba(0,255,255,0.1), rgba(33,33,222,0.2));
       animation: borderGlow 4s ease-in-out infinite;
+      max-width: calc(100vw - 32px);
     }
 
     .game-frame-inner {
@@ -587,6 +588,8 @@
 
     #game-container canvas {
       display: block;
+      max-width: 100%;
+      height: auto !important;
     }
 
     /* ─── OVERLAY (in-game menus) ─── */
@@ -604,59 +607,62 @@
     #overlay.active { pointer-events: auto; }
     #overlay .message {
       text-align: center;
-      font-size: 1.2em;
+      font-size: clamp(0.5em, 2.5vw, 1.2em);
       text-shadow: 0 0 10px currentColor;
+      padding: 16px;
+      max-width: 100%;
+      word-break: break-word;
     }
 
     .menu-screen .menu-title {
-      font-size: 2.4em;
+      font-size: clamp(1em, 5vw, 2.4em);
       color: var(--gold);
       animation: glowPulse 2s ease-in-out infinite;
       margin-bottom: 16px;
-      letter-spacing: 4px;
+      letter-spacing: clamp(1px, 0.5vw, 4px);
     }
     .menu-screen .menu-token {
-      font-size: 0.65em;
+      font-size: clamp(0.35em, 1.5vw, 0.65em);
       color: var(--cyan);
       text-shadow: 0 0 15px var(--cyan);
       margin-bottom: 36px;
       letter-spacing: 2px;
     }
     .menu-screen .menu-high {
-      font-size: 0.6em;
+      font-size: clamp(0.3em, 1.2vw, 0.6em);
       color: #888;
       margin-bottom: 14px;
     }
     .menu-screen .menu-start {
-      font-size: 0.75em;
+      font-size: clamp(0.35em, 1.5vw, 0.75em);
       animation: pulse 1.5s infinite;
       color: #ccc;
     }
     .ready-text {
       color: var(--gold);
-      font-size: 1.8em;
+      font-size: clamp(0.8em, 4vw, 1.8em);
       animation: popIn 0.4s ease-out;
       text-shadow: 0 0 20px var(--gold);
     }
     .gameover-screen .go-title {
       color: var(--red);
-      font-size: 1.8em;
+      font-size: clamp(0.8em, 4vw, 1.8em);
       margin-bottom: 24px;
       text-shadow: 0 0 20px var(--red);
     }
-    .gameover-screen .go-score { font-size: 0.85em; margin-bottom: 10px; }
-    .gameover-screen .go-high { font-size: 0.6em; color: var(--gold); margin-bottom: 28px; }
-    .gameover-screen .go-restart { font-size: 0.7em; animation: pulse 1.5s infinite; color: #ccc; }
+    .gameover-screen .go-score { font-size: clamp(0.4em, 1.8vw, 0.85em); margin-bottom: 10px; }
+    .gameover-screen .go-high { font-size: clamp(0.3em, 1.2vw, 0.6em); color: var(--gold); margin-bottom: 28px; }
+    .gameover-screen .go-restart { font-size: clamp(0.35em, 1.5vw, 0.7em); animation: pulse 1.5s infinite; color: #ccc; }
 
     .pause-text {
       color: var(--cyan);
-      font-size: 2em;
+      font-size: clamp(0.8em, 4vw, 2em);
       text-shadow: 0 0 20px var(--cyan), 0 0 40px var(--cyan);
       animation: glowPulse 2s ease-in-out infinite;
       margin-bottom: 20px;
     }
     .pause-hint {
-      font-size: 0.6em;
+      font-size: clamp(0.3em, 1.2vw, 0.6em);
       color: #888;
       animation: pulse 1.5s infinite;
     }
