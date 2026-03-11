@@ -19,9 +19,13 @@ export default class Input {
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
+    this._onTouchStart = this._onTouchStart.bind(this);
+    this._onTouchEnd = this._onTouchEnd.bind(this);
 
     window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('keyup', this._onKeyUp);
+    window.addEventListener('touchstart', this._onTouchStart, { passive: false });
+    window.addEventListener('touchend', this._onTouchEnd, { passive: false });
   }
 
   _onKeyDown(e) {
@@ -36,6 +40,34 @@ export default class Input {
 
   _onKeyUp(e) {
     this._keys[e.key] = false;
+  }
+
+  _onTouchStart(e) {
+    const t = e.touches[0];
+    this._touchStart = { x: t.clientX, y: t.clientY, time: Date.now() };
+  }
+
+  _onTouchEnd(e) {
+    if (!this._touchStart) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - this._touchStart.x;
+    const dy = t.clientY - this._touchStart.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const elapsed = Date.now() - this._touchStart.time;
+    this._touchStart = null;
+
+    // Need minimum 20px swipe within 500ms
+    if (dist < 20 || elapsed > 500) return;
+    e.preventDefault();
+
+    let dir;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      dir = dx > 0 ? DIR.RIGHT : DIR.LEFT;
+    } else {
+      dir = dy > 0 ? DIR.DOWN : DIR.UP;
+    }
+    this._lastDirection = dir;
+    this._directionBuffer = dir;
   }
 
   // Returns the most recently pressed direction
@@ -76,5 +108,7 @@ export default class Input {
   destroy() {
     window.removeEventListener('keydown', this._onKeyDown);
     window.removeEventListener('keyup', this._onKeyUp);
+    window.removeEventListener('touchstart', this._onTouchStart);
+    window.removeEventListener('touchend', this._onTouchEnd);
   }
 }

@@ -32,8 +32,8 @@
       50% { opacity: 0.3; }
     }
     @keyframes glowPulse {
-      0%, 100% { text-shadow: 0 0 20px var(--gold), 0 0 60px var(--gold); }
-      50% { text-shadow: 0 0 40px var(--gold), 0 0 80px var(--gold), 0 0 120px rgba(255,224,0,0.3); }
+      0%, 100% { text-shadow: 0 0 6px rgba(255,224,0,0.3), 0 2px 4px rgba(0,0,0,0.6); }
+      50% { text-shadow: 0 0 12px rgba(255,224,0,0.4), 0 2px 4px rgba(0,0,0,0.6); }
     }
     @keyframes popIn {
       0% { transform: scale(0.5); opacity: 0; }
@@ -434,7 +434,7 @@
       letter-spacing: 8px;
       line-height: 1.15;
       opacity: 0;
-      text-shadow: 0 0 15px rgba(255,224,0,0.4), 0 2px 4px rgba(0,0,0,0.6);
+      text-shadow: 0 0 6px rgba(255,224,0,0.25), 0 2px 4px rgba(0,0,0,0.6);
     }
 
     .hero-token {
@@ -584,6 +584,7 @@
     #game-container {
       position: relative;
       line-height: 0;
+      touch-action: none;
     }
 
     #game-container canvas {
@@ -1023,7 +1024,7 @@
         </div>
       </div>
     </div>
-    <div class="game-controls">ARROW KEYS / WASD TO MOVE</div>
+    <div class="game-controls">SWIPE TO MOVE · ARROW KEYS / WASD</div>
   </section>
 
   <div class="section-divider"></div>

@@ -143,6 +143,14 @@ export default class Game {
   }
 
   _setupPause() {
+    this._unpause = () => {
+      if (this.state !== STATE.PAUSED) return;
+      this.state = STATE.PLAYING;
+      this.audio.resumeAll();
+      this._overlay.classList.remove('active');
+      this._overlay.innerHTML = '';
+    };
+
     window.addEventListener('keydown', (e) => {
       if (e.code !== 'Space') return;
       e.preventDefault();
@@ -154,16 +162,16 @@ export default class Game {
         this._overlay.innerHTML = `
           <div class="message">
             <div class="pause-text">PAUSED</div>
-            <div class="pause-hint">PRESS SPACE TO RESUME</div>
+            <div class="pause-hint">TAP OR PRESS SPACE</div>
           </div>
         `;
       } else if (this.state === STATE.PAUSED) {
-        this.state = STATE.PLAYING;
-        this.audio.resumeAll();
-        this._overlay.classList.remove('active');
-        this._overlay.innerHTML = '';
+        this._unpause();
       }
     });
+
+    // Tap the pause overlay to resume
+    this._overlay.addEventListener('touchend', () => this._unpause());
   }
 
   _checkLevelClear() {
@@ -184,21 +192,29 @@ export default class Game {
         <div class="menu-title">PAC-MAN</div>
         <div class="menu-token">$PACMAN</div>
         <div class="menu-high">HIGH SCORE: ${this.score.highScore}</div>
-        <div class="menu-start">PRESS ANY KEY</div>
+        <div class="menu-start">TAP OR PRESS ANY KEY</div>
       </div>
     `;
 
     // Load a maze in the background for visual
     this._loadLevel(0);
 
-    // Wait for keypress
+    // Wait for keypress or tap
     this._menuListener = (e) => {
       e.preventDefault();
       window.removeEventListener('keydown', this._menuListener);
+      window.removeEventListener('touchend', this._menuTouchListener);
       this.audio.load(); // Init audio on first interaction
       this._startGame();
     };
+    this._menuTouchListener = (e) => {
+      window.removeEventListener('keydown', this._menuListener);
+      window.removeEventListener('touchend', this._menuTouchListener);
+      this.audio.load();
+      this._startGame();
+    };
     window.addEventListener('keydown', this._menuListener);
+    window.addEventListener('touchend', this._menuTouchListener);
   }
 
   _startGame() {
@@ -415,17 +431,26 @@ export default class Game {
         <div class="go-title">GAME OVER</div>
         <div class="go-score">SCORE: ${this.score.score}</div>
         <div class="go-high">HIGH SCORE: ${this.score.highScore}</div>
-        <div class="go-restart">PRESS ANY KEY</div>
+        <div class="go-restart">TAP OR PRESS ANY KEY</div>
       </div>
     `;
 
     this._gameOverListener = (e) => {
       e.preventDefault();
       window.removeEventListener('keydown', this._gameOverListener);
+      window.removeEventListener('touchend', this._gameOverTouchListener);
+      this._overlay.classList.remove('active');
+      this._overlay.innerHTML = '';
+      this._startGame();
+    };
+    this._gameOverTouchListener = () => {
+      window.removeEventListener('keydown', this._gameOverListener);
+      window.removeEventListener('touchend', this._gameOverTouchListener);
       this._overlay.classList.remove('active');
       this._overlay.innerHTML = '';
       this._startGame();
     };
     window.addEventListener('keydown', this._gameOverListener);
+    window.addEventListener('touchend', this._gameOverTouchListener);
   }
 }
