@@ -11,20 +11,27 @@ const KEY_MAP = {
   d: DIR.RIGHT
 };
 
+// Minimum distance (px) finger must move from origin to register a direction
+const SWIPE_THRESHOLD = 15;
+
 export default class Input {
   constructor() {
     this._keys = {};
     this._lastDirection = null;
     this._directionBuffer = null;
+    this._touchOrigin = null;
+    this._touching = false;
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
     this._onTouchStart = this._onTouchStart.bind(this);
+    this._onTouchMove = this._onTouchMove.bind(this);
     this._onTouchEnd = this._onTouchEnd.bind(this);
 
     window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('keyup', this._onKeyUp);
     window.addEventListener('touchstart', this._onTouchStart, { passive: false });
+    window.addEventListener('touchmove', this._onTouchMove, { passive: false });
     window.addEventListener('touchend', this._onTouchEnd, { passive: false });
   }
 
@@ -44,30 +51,43 @@ export default class Input {
 
   _onTouchStart(e) {
     const t = e.touches[0];
-    this._touchStart = { x: t.clientX, y: t.clientY, time: Date.now() };
+    this._touchOrigin = { x: t.clientX, y: t.clientY };
+    this._touching = true;
   }
 
-  _onTouchEnd(e) {
-    if (!this._touchStart) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - this._touchStart.x;
-    const dy = t.clientY - this._touchStart.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const elapsed = Date.now() - this._touchStart.time;
-    this._touchStart = null;
-
-    // Need minimum 20px swipe within 500ms
-    if (dist < 20 || elapsed > 500) return;
+  _onTouchMove(e) {
+    if (!this._touchOrigin) return;
     e.preventDefault();
+    const t = e.touches[0];
+    const dx = t.clientX - this._touchOrigin.x;
+    const dy = t.clientY - this._touchOrigin.y;
+
+    // Determine direction from origin point
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    if (absDx < SWIPE_THRESHOLD && absDy < SWIPE_THRESHOLD) return;
 
     let dir;
-    if (Math.abs(dx) > Math.abs(dy)) {
+    if (absDx > absDy) {
       dir = dx > 0 ? DIR.RIGHT : DIR.LEFT;
     } else {
       dir = dy > 0 ? DIR.DOWN : DIR.UP;
     }
-    this._lastDirection = dir;
-    this._directionBuffer = dir;
+
+    // Only buffer if direction changed
+    if (dir !== this._lastDirection) {
+      this._lastDirection = dir;
+      this._directionBuffer = dir;
+    }
+
+    // Reset origin so next move is relative to current position
+    this._touchOrigin = { x: t.clientX, y: t.clientY };
+  }
+
+  _onTouchEnd() {
+    this._touchOrigin = null;
+    this._touching = false;
   }
 
   // Returns the most recently pressed direction
@@ -89,6 +109,7 @@ export default class Input {
 
   // Check if any direction key is currently held
   isAnyDirectionHeld() {
+    if (this._touching) return true;
     for (const [key, held] of Object.entries(this._keys)) {
       if (held && KEY_MAP[key]) return true;
     }
@@ -109,6 +130,7 @@ export default class Input {
     window.removeEventListener('keydown', this._onKeyDown);
     window.removeEventListener('keyup', this._onKeyUp);
     window.removeEventListener('touchstart', this._onTouchStart);
+    window.removeEventListener('touchmove', this._onTouchMove);
     window.removeEventListener('touchend', this._onTouchEnd);
   }
 }

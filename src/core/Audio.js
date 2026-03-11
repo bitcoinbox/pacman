@@ -1,4 +1,4 @@
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 
 const SOUNDS = {
   intro:      { src: '/audio/intro.mp3', volume: 0.6 },
@@ -23,6 +23,11 @@ export default class Audio {
     if (this._loaded) return;
     this._loaded = true;
 
+    // Unlock audio context on mobile (iOS/Android require user gesture)
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume();
+    }
+
     for (const [key, cfg] of Object.entries(SOUNDS)) {
       this._sounds[key] = new Howl({
         src: [cfg.src],
@@ -37,6 +42,10 @@ export default class Audio {
     if (this._muted) return;
     const sound = this._sounds[name];
     if (!sound) return;
+    // Ensure audio context is running (mobile can re-suspend)
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume();
+    }
     // For short SFX, just play. For loops, only play if not already playing
     if (sound._loop && sound.playing()) return;
     sound.play();
