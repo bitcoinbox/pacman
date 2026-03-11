@@ -603,27 +603,21 @@ export default class Game {
         <div class="go-score">SCORE: ${this.score.score.toLocaleString()}</div>
         <div class="go-high">HIGH SCORE: ${this.score.highScore.toLocaleString()}</div>
         <a class="go-share" href="${twitterLink}" target="_blank" onclick="event.stopPropagation()">SHARE ON X</a>
-        <div class="go-restart">TAP OR PRESS ANY KEY</div>
+        <div class="pause-actions">
+          <button class="pause-btn resume" data-action="play-again">PLAY AGAIN</button>
+          <button class="pause-btn exit" data-action="exit">EXIT</button>
+        </div>
       </div>
     `;
 
-    this._gameOverListener = (e) => {
-      e.preventDefault();
-      window.removeEventListener('keydown', this._gameOverListener);
-      window.removeEventListener('touchend', this._gameOverTouchListener);
+    this._overlay.querySelector('[data-action="play-again"]').addEventListener('click', () => {
       this._overlay.classList.remove('active');
       this._overlay.innerHTML = '';
       this._startGame();
-    };
-    this._gameOverTouchListener = () => {
-      window.removeEventListener('keydown', this._gameOverListener);
-      window.removeEventListener('touchend', this._gameOverTouchListener);
-      this._overlay.classList.remove('active');
-      this._overlay.innerHTML = '';
-      this._startGame();
-    };
-    window.addEventListener('keydown', this._gameOverListener);
-    window.addEventListener('touchend', this._gameOverTouchListener);
+    });
+    this._overlay.querySelector('[data-action="exit"]').addEventListener('click', () => {
+      this.exitGame();
+    });
   }
 
   // ── Online session / score submission ──────────────

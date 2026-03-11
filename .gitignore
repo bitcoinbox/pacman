@@ -4,3 +4,5 @@ dist/
 *.local
 .vercel
 .env*.local
+html5/
+README.md
