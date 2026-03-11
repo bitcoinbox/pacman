@@ -89,6 +89,18 @@ export async function getPlayerRank(wallet, period = 'alltime') {
   return { rank: rank !== null ? rank + 1 : null, score: score ? Number(score) : 0 };
 }
 
+// ── Replays ─────────────────────────────────────────
+
+export async function saveReplay(wallet, replayData) {
+  // Store replay for player's best score, expires in 30 days
+  await kv.set(`replay:${wallet}`, replayData, { ex: 2592000 });
+}
+
+export async function getReplay(wallet) {
+  const data = await kv.get(`replay:${wallet}`);
+  return data || null;
+}
+
 // ── Daily Challenges ────────────────────────────────
 
 const CHALLENGE_TYPES = [

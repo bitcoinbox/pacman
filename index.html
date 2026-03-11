@@ -1415,6 +1415,95 @@
       transform: translateY(-2px);
     }
 
+    /* ─── REPLAY UI ─── */
+    .replay-banner-wrap {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      pointer-events: none;
+    }
+    .replay-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 14px;
+      background: rgba(0,0,0,0.85);
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(0.28em, 1vw, 0.45em);
+      color: #ccc;
+      pointer-events: auto;
+      flex-wrap: wrap;
+    }
+    .replay-label {
+      color: var(--red);
+      padding: 3px 8px;
+      border: 1px solid var(--red);
+      border-radius: 3px;
+      font-size: 0.85em;
+      animation: pulse 1.5s infinite;
+    }
+    .replay-player { color: var(--gold); }
+    .replay-score { color: var(--cyan); }
+    .replay-controls {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+    .replay-speed, .replay-exit {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.85em;
+      padding: 4px 8px;
+      background: transparent;
+      border: 1px solid #444;
+      color: #888;
+      border-radius: 3px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .replay-speed.active {
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+    .replay-exit {
+      color: var(--red);
+      border-color: rgba(255,68,68,0.4);
+    }
+    .replay-exit:hover { border-color: var(--red); }
+    .replay-progress {
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      pointer-events: none;
+    }
+    .replay-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--cyan);
+      transition: width 0.3s linear;
+    }
+    .lb-watch {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.7em;
+      padding: 3px 8px;
+      margin-left: 8px;
+      background: transparent;
+      border: 1px solid rgba(0,255,255,0.3);
+      color: var(--cyan);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lb-watch:hover {
+      background: rgba(0,255,255,0.1);
+      border-color: var(--cyan);
+    }
+    @media (max-width: 768px) {
+      .replay-banner { font-size: 0.25em; gap: 6px; padding: 6px 10px; }
+      .lb-watch { font-size: 0.6em; padding: 2px 6px; margin-left: 4px; }
+    }
+
     /* ─── D-PAD ─── */
     .dpad {
       display: none;

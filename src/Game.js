@@ -9,6 +9,9 @@ import Loop from './core/Loop.js';
 import Input from './core/Input.js';
 import EventBus from './core/EventBus.js';
 import Audio from './core/Audio.js';
+import Rng from './core/Rng.js';
+import Recorder from './core/Recorder.js';
+import ReplayInput from './core/ReplayInput.js';
 import Renderer from './render/Renderer.js';
 import MazeRenderer from './render/MazeRenderer.js';
 import PelletRenderer from './render/PelletRenderer.js';
@@ -69,6 +72,14 @@ export default class Game {
     this._powerUp = null;         // { type, tile, timer }
     this._powerUpEffect = null;   // { type, timer }
     this._powerUpSpawnTimer = 0;
+
+    // Replay system
+    this.rng = null;
+    this._recorder = null;
+    this._replayMode = false;
+    this._replayInput = null;
+    this._replaySpeed = 1;
+    this._replayData = null;  // stored after game over for submission
 
     this._setupEvents();
     this._setupPause();
@@ -187,7 +198,7 @@ export default class Game {
   }
 
   pause() {
-    if (this.state !== STATE.PLAYING) return;
+    if (this.state !== STATE.PLAYING || this._replayMode) return;
     this.state = STATE.PAUSED;
     this.audio.pauseAll();
     this._overlay.classList.add('active');
@@ -213,6 +224,9 @@ export default class Game {
     this._overlay.innerHTML = '';
     this.input.captureTouch = false;
     this.input.clear();
+    this._replayMode = false;
+    this._replayInput = null;
+    this._recorder = null;
     this._showMenu();
     this._emitStateChange();
   }
@@ -266,12 +280,64 @@ export default class Game {
   }
 
   _startGame() {
+    this._replayMode = false;
+    this._replayInput = null;
+    this._replaySpeed = 1;
+    const seed = Date.now() ^ (Math.random() * 0xFFFFFFFF >>> 0);
+    this.rng = new Rng(seed);
+    this._recorder = new Recorder(seed, 0);
     this.score.reset();
     this._startSession();
     this._loadLevel(0);
     this._startReady();
     this.audio.play('intro');
     this._emitStateChange();
+  }
+
+  // Start replay playback from recorded data
+  startReplay(replayData, playerInfo = {}) {
+    this._replayMode = true;
+    this._replaySpeed = 1;
+    this.rng = new Rng(replayData.s);
+    this._recorder = null;
+    this._replayInput = new ReplayInput(replayData);
+    this.score.reset();
+    this._loadLevel(replayData.m || 0);
+
+    // Show replay banner
+    this._overlay.classList.add('active');
+    const name = playerInfo.nickname || 'ANON';
+    const score = playerInfo.score?.toLocaleString() || '???';
+    this._overlay.innerHTML = `
+      <div class="message replay-banner-wrap">
+        <div class="replay-banner">
+          <span class="replay-label">REPLAY</span>
+          <span class="replay-player">${name}</span>
+          <span class="replay-score">${score}</span>
+          <div class="replay-controls">
+            <button class="replay-speed" data-speed="1">1x</button>
+            <button class="replay-speed" data-speed="2">2x</button>
+            <button class="replay-speed" data-speed="4">4x</button>
+            <button class="replay-exit">EXIT</button>
+          </div>
+        </div>
+        <div class="replay-progress"><div class="replay-progress-bar"></div></div>
+      </div>
+    `;
+    this._overlay.querySelectorAll('.replay-speed').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._replaySpeed = parseInt(btn.dataset.speed);
+        this._overlay.querySelectorAll('.replay-speed').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+    this._overlay.querySelector('.replay-speed[data-speed="1"]').classList.add('active');
+    this._overlay.querySelector('.replay-exit').addEventListener('click', () => this.exitGame());
+
+    this.state = STATE.PLAYING;
+    this._emitStateChange();
+    this.audio.load();
+    this.audio.play('back');
   }
 
   _startReady() {
@@ -342,7 +408,8 @@ export default class Game {
       waitTime: 0,
       frightenedTime: diff.frightenedTime,
       scatterTarget: this.map.getTileByGrid(25, 0),
-      player: this.player
+      player: this.player,
+      rng: this.rng
     });
     blinky.spawn(houseExit.x, houseExit.y, 'l');
     blinky.mode = 'scatter';
@@ -354,7 +421,8 @@ export default class Game {
       waitTime: 2 * diff.waitScale,
       frightenedTime: diff.frightenedTime,
       scatterTarget: this.map.getTileByGrid(2, 0),
-      player: this.player
+      player: this.player,
+      rng: this.rng
     });
     pinky.spawn(houseCenter.x, houseCenter.y, 'u');
 
@@ -365,7 +433,8 @@ export default class Game {
       frightenedTime: diff.frightenedTime,
       scatterTarget: this.map.getTileByGrid(27, 35),
       player: this.player,
-      blinky: blinky
+      blinky: blinky,
+      rng: this.rng
     });
     const inkyX = houseCenter.getNeighbor('l');
     inky.spawn(inkyX ? inkyX.x : houseCenter.x - TILE, houseCenter.y, 'u');
@@ -376,7 +445,8 @@ export default class Game {
       waitTime: 8 * diff.waitScale,
       frightenedTime: diff.frightenedTime,
       scatterTarget: this.map.getTileByGrid(0, 35),
-      player: this.player
+      player: this.player,
+      rng: this.rng
     });
     const sueX = houseCenter.getNeighbor('r');
     sue.spawn(sueX ? sueX.x : houseCenter.x + TILE, houseCenter.y, 'u');
@@ -451,15 +521,54 @@ export default class Game {
   }
 
   _updatePlaying(dt) {
+    // Replay speed multiplier — run multiple ticks per frame
+    const ticks = this._replayMode ? this._replaySpeed : 1;
+    for (let t = 0; t < ticks; t++) {
+      this._tickPlaying(dt);
+      if (this.state !== STATE.PLAYING) break;
+    }
+
+    // Update replay progress bar
+    if (this._replayMode && this._replayInput) {
+      const bar = this._overlay.querySelector('.replay-progress-bar');
+      if (bar) bar.style.width = `${this._replayInput.getProgress() * 100}%`;
+      if (this._replayInput.done) {
+        this._replayComplete();
+        return;
+      }
+    }
+  }
+
+  _replayComplete() {
+    this.audio.stopAll();
+    this._overlay.classList.add('active');
+    this._overlay.innerHTML = `
+      <div class="message">
+        <div class="pause-text">REPLAY COMPLETE</div>
+        <div class="pause-actions">
+          <button class="pause-btn resume" data-action="exit">EXIT</button>
+        </div>
+      </div>
+    `;
+    this._overlay.querySelector('[data-action="exit"]').addEventListener('click', () => this.exitGame());
+    this.state = STATE.GAME_OVER;
+    this._emitStateChange();
+  }
+
+  _tickPlaying(dt) {
     // Freeze timer (ghost eat pause)
     if (this._freezeTimer > 0) {
       this._freezeTimer -= dt;
       return;
     }
 
-    // Player input
-    const dir = this.input.getDirection();
+    // Player input — from replay or live
+    const inputSource = this._replayMode ? this._replayInput : this.input;
+    const dir = inputSource.getDirection();
     if (dir) this.player.setDirection(dir);
+
+    // Record input for replay
+    if (this._recorder) this._recorder.tick(dir);
 
     // Apply speed boost power-up
     const speedMul = (this._powerUpEffect?.type === 'speed') ? 1.35 : 1;
@@ -502,7 +611,7 @@ export default class Game {
     this._powerUpSpawnTimer -= dt;
     if (this._powerUpSpawnTimer <= 0 && !this._powerUp) {
       this._spawnPowerUp();
-      this._powerUpSpawnTimer = 15 + Math.random() * 10; // 15-25s between spawns
+      this._powerUpSpawnTimer = 15 + (this.rng ? this.rng.next() : Math.random()) * 10;
     }
 
     // Despawn timer for uncollected power-up
@@ -540,9 +649,9 @@ export default class Game {
       !t.isWall() && !t.isHouse() && !t.isTunnel() && !t.hasItem && t.code !== 'h'
     );
     if (candidates.length === 0) return;
-    const tile = candidates[Math.floor(Math.random() * candidates.length)];
+    const tile = this.rng ? this.rng.pick(candidates) : candidates[Math.floor(Math.random() * candidates.length)];
     const types = ['speed', 'multiplier', 'freeze'];
-    const type = types[Math.floor(Math.random() * types.length)];
+    const type = this.rng ? this.rng.pick(types) : types[Math.floor(Math.random() * types.length)];
     this._powerUp = { type, tile, timer: 10 }; // 10s to collect
   }
 
@@ -588,6 +697,14 @@ export default class Game {
   _gameOver() {
     this.state = STATE.GAME_OVER;
     this._emitStateChange();
+
+    // Stop recording and save replay data
+    if (this._recorder) {
+      this._recorder.stop();
+      this._replayData = this._recorder.encode();
+      this._recorder = null;
+    }
+
     this.score.saveHighScore();
     this._submitScore();
     this.audio.stopAll();
@@ -651,6 +768,7 @@ export default class Game {
           sessionId: this._sessionId,
           score: this.score.score,
           level: this.score.level,
+          replay: this._replayData || null,
         }),
       });
       const data = await res.json();

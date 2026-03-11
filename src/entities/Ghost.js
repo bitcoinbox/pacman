@@ -60,6 +60,9 @@ export default class Ghost {
 
     // Global mode timer reference (shared across ghosts)
     this._globalTimer = config.globalTimer || null;
+
+    // Seeded RNG for deterministic replay (optional)
+    this._opts = { rng: config.rng || null };
   }
 
   spawn(x, y, dir = 'u') {
@@ -296,8 +299,9 @@ export default class Ghost {
         return n && !n.isWall() && !n.isHouse();
       });
       if (valid.length > 0) {
-        const randomDir = valid[Math.floor(Math.random() * valid.length)];
-        return tile.getNeighbor(randomDir);
+        const rng = this._opts?.rng;
+        const idx = rng ? rng.int(valid.length) : Math.floor(Math.random() * valid.length);
+        return tile.getNeighbor(valid[idx]);
       }
       return tile;
     }

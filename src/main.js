@@ -52,18 +52,46 @@ async function loadLeaderboard() {
       data.entries.forEach((e, i) => {
         const name = e.nickname || 'ANON';
         const shortAddr = e.wallet.slice(0, 4) + '...' + e.wallet.slice(-4);
+        const watchBtn = e.hasReplay
+          ? `<button class="lb-watch" data-wallet="${e.wallet}" data-name="${name}" data-score="${e.score}">WATCH</button>`
+          : '';
         html += `<div class="lb-row animate" style="animation-delay:${i * 0.05}s">
           <div class="lb-rank">${e.rank}</div>
           <div class="lb-player">
             <span class="lb-player-name">${name}</span>
             <span class="lb-player-addr">${shortAddr}</span>
           </div>
-          <div class="lb-score">${e.score.toLocaleString()}</div>
+          <div class="lb-score">${e.score.toLocaleString()}${watchBtn}</div>
         </div>`;
       });
     }
 
     lbTable.innerHTML = html;
+
+    // Wire up WATCH buttons
+    lbTable.querySelectorAll('.lb-watch').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const w = btn.dataset.wallet;
+        const name = btn.dataset.name;
+        const score = parseInt(btn.dataset.score);
+        btn.textContent = '...';
+        try {
+          const res = await fetch(`/api/replay?wallet=${w}`);
+          const data = await res.json();
+          if (data.replay) {
+            const replayData = typeof data.replay === 'string' ? JSON.parse(data.replay) : data.replay;
+            document.getElementById('game-section').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+              game.startReplay(replayData, { nickname: name, score });
+            }, 500);
+          }
+        } catch {
+          btn.textContent = 'ERR';
+          setTimeout(() => { btn.textContent = 'WATCH'; }, 2000);
+        }
+      });
+    });
 
     // My rank
     if (data.myRank && lbMyRank) {

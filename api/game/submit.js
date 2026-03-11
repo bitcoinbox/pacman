@@ -1,4 +1,4 @@
-import { getSession, deleteSession, getPlayer, setPlayer, submitScore } from '../_lib/kv.js';
+import { getSession, deleteSession, getPlayer, setPlayer, submitScore, saveReplay } from '../_lib/kv.js';
 import { getWalletFromRequest, handleCors } from '../_lib/auth.js';
 
 // Anti-cheat constants
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const wallet = getWalletFromRequest(req);
   if (!wallet) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { sessionId, score, level } = req.body || {};
+  const { sessionId, score, level, replay } = req.body || {};
 
   if (!sessionId || typeof score !== 'number' || score < 0) {
     return res.status(400).json({ error: 'Invalid submission' });
@@ -64,13 +64,19 @@ export default async function handler(req, res) {
   const updates = {
     totalGames: (player?.totalGames || 0) + 1,
   };
-  if (finalScore > (player?.bestScore || 0)) {
+  const isNewBest = finalScore > (player?.bestScore || 0);
+  if (isNewBest) {
     updates.bestScore = finalScore;
   }
   await setPlayer(wallet, updates);
 
   // Submit to leaderboard
   await submitScore(wallet, finalScore);
+
+  // Save replay data for new best scores (max 50KB)
+  if (isNewBest && replay && typeof replay === 'string' && replay.length < 50000) {
+    await saveReplay(wallet, replay);
+  }
 
   return res.status(200).json({
     accepted: true,
