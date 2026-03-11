@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>$PACMAN — The Arcade Memecoin</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="description" content="$PACMAN — The premium arcade memecoin. Play the game. Join the movement." />
@@ -1332,20 +1332,22 @@
     /* ─── D-PAD ─── */
     .dpad {
       display: none;
-      grid-template-columns: 60px 60px 60px;
-      grid-template-rows: 60px 60px 60px;
-      gap: 4px;
-      margin: 24px auto 0;
-      width: 188px;
-      z-index: 2;
-      position: relative;
+      grid-template-columns: 76px 76px 76px;
+      grid-template-rows: 76px 76px 76px;
+      gap: 6px;
+      width: 240px;
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
     }
     .dpad-btn {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      color: #666;
-      font-size: 1.2em;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      color: #888;
+      font-size: 1.4em;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -1355,13 +1357,13 @@
       user-select: none;
     }
     .dpad-btn:active, .dpad-btn.pressed {
-      background: rgba(0,255,255,0.15);
+      background: rgba(0,255,255,0.2);
       border-color: var(--cyan);
       color: var(--cyan);
     }
     .dpad-up { grid-column: 2; grid-row: 1; }
     .dpad-left { grid-column: 1; grid-row: 2; }
-    .dpad-center { grid-column: 2; grid-row: 2; background: rgba(255,255,255,0.02); border-radius: 8px; }
+    .dpad-center { grid-column: 2; grid-row: 2; background: rgba(255,255,255,0.02); border-radius: 12px; }
     .dpad-right { grid-column: 3; grid-row: 2; }
     .dpad-down { grid-column: 2; grid-row: 3; }
 
@@ -1378,6 +1380,7 @@
       .how-grid { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; }
       .link-btn { padding: 14px 24px; font-size: 0.42em; }
       .dpad { display: grid; }
+      #game-section { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 300px); }
       .lb-row { font-size: 0.4em; padding: 8px 12px; }
       .lb-player-addr { display: none; }
       .lb-my-rank { flex-direction: column; gap: 8px; text-align: center; }
