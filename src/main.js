@@ -1,0 +1,235 @@
+import Game from './Game.js';
+import HeroScene from './hero/HeroScene.js';
+import Wallet from './wallet.js';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
+// ── Game init ──────────────────────────────────────────
+const container = document.getElementById('game-container');
+const game = new Game(container);
+game.init().catch(err => {
+  console.error('Failed to initialize game:', err);
+});
+
+// ── 3D Hero Scene ──────────────────────────────────────
+const heroCanvas = document.getElementById('hero-canvas');
+if (heroCanvas) {
+  new HeroScene(heroCanvas);
+}
+
+// ── Wallet Connect ───────────────────────────────────────
+const walletBtn = document.getElementById('wallet-btn');
+if (walletBtn) {
+  new Wallet(walletBtn);
+}
+
+// ── Navbar scroll effect ─────────────────────────────────
+const navbar = document.getElementById('navbar');
+if (navbar) {
+  let scrolled = false;
+  window.addEventListener('scroll', () => {
+    const shouldScroll = window.scrollY > 40;
+    if (shouldScroll !== scrolled) {
+      scrolled = shouldScroll;
+      navbar.classList.toggle('scrolled', scrolled);
+    }
+  }, { passive: true });
+}
+
+// ── Mobile nav toggle ────────────────────────────────────
+const navToggle = document.getElementById('nav-toggle');
+const navLinks = document.getElementById('nav-links');
+if (navToggle && navLinks) {
+  navToggle.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
+  });
+  // Close menu when a link is clicked
+  navLinks.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => navLinks.classList.remove('open'));
+  });
+}
+
+// ── GSAP Hero Entrance ─────────────────────────────────
+// Set initial states
+gsap.set('.hero-scoreboard', { y: 20 });
+gsap.set('.hero-label', { y: 30, letterSpacing: '20px' });
+gsap.set('.hero-token', { y: 25 });
+gsap.set('.hero-tagline', { y: 30 });
+gsap.set('.hero-cta', { y: 30 });
+gsap.set('.hero-pacman', { scale: 0.8 });
+gsap.set('.hero-pellets', { });
+
+const heroTl = gsap.timeline({ delay: 0.4 });
+
+heroTl
+  // Scoreboard fades in first
+  .to('.hero-scoreboard', {
+    opacity: 1, y: 0, duration: 0.6, ease: 'power3.out'
+  })
+  // Label
+  .to('.hero-label', {
+    opacity: 1, y: 0, letterSpacing: '8px',
+    duration: 1.0, ease: 'power3.out'
+  }, '-=0.3')
+  // Title — big entrance
+  .fromTo('.hero-title',
+    { opacity: 0, scale: 0.7, y: 30 },
+    { opacity: 1, scale: 1, y: 0, duration: 1.2, ease: 'power4.out' },
+    '-=0.5'
+  )
+  // Pac-Man appears
+  .to('.hero-pacman', {
+    opacity: 0.18, scale: 1, duration: 1.0, ease: 'power3.out'
+  }, '-=0.8')
+  // Pellet trail
+  .to('.hero-pellets', {
+    opacity: 1, duration: 0.6, ease: 'power2.out'
+  }, '-=0.5')
+  // Token
+  .to('.hero-token', {
+    opacity: 1, y: 0, duration: 0.8, ease: 'power3.out'
+  }, '-=0.4')
+  // Tagline
+  .to('.hero-tagline', {
+    opacity: 1, y: 0, duration: 0.8, ease: 'power3.out'
+  }, '-=0.3')
+  // CTAs
+  .to('.hero-cta', {
+    opacity: 1, y: 0, duration: 0.8, ease: 'power3.out'
+  }, '-=0.2');
+
+// Add glow pulse to title after entrance
+heroTl.call(() => {
+  const title = document.querySelector('.hero-title');
+  if (title) title.style.animation = 'glowPulse 3s ease-in-out infinite';
+});
+
+// ── Score counter animation ─────────────────────────────
+heroTl.call(() => {
+  const scoreEl = document.querySelector('.hero-score-value');
+  if (!scoreEl) return;
+  const chars = '$PACMAN';
+  let frame = 0;
+  const totalFrames = 30;
+  const interval = setInterval(() => {
+    frame++;
+    if (frame >= totalFrames) {
+      scoreEl.textContent = chars;
+      clearInterval(interval);
+      return;
+    }
+    // Show random digits, progressively reveal final text
+    const revealed = Math.floor((frame / totalFrames) * chars.length);
+    let display = '';
+    for (let i = 0; i < chars.length; i++) {
+      if (i < revealed) {
+        display += chars[i];
+      } else {
+        display += Math.floor(Math.random() * 10);
+      }
+    }
+    scoreEl.textContent = display;
+  }, 50);
+}, '-=1.5');
+
+// ── Mouse parallax on HTML layers ────────────────────────
+const heroPacman = document.querySelector('.hero-pacman');
+const heroContent = document.querySelector('.hero-content');
+const heroPellets = document.querySelector('.hero-pellets');
+
+if (heroPacman && heroContent) {
+  window.addEventListener('mousemove', (e) => {
+    const mx = (e.clientX / window.innerWidth - 0.5) * 2;
+    const my = (e.clientY / window.innerHeight - 0.5) * 2;
+
+    // Pac-Man moves more (deeper layer feel)
+    gsap.to(heroPacman, {
+      x: mx * -15,
+      y: my * -10,
+      duration: 0.8,
+      ease: 'power2.out',
+      overwrite: 'auto'
+    });
+
+    // Pellets move with pac-man
+    if (heroPellets) {
+      gsap.to(heroPellets, {
+        x: mx * -12,
+        y: my * -8,
+        duration: 0.8,
+        ease: 'power2.out',
+        overwrite: 'auto'
+      });
+    }
+
+    // Content moves less (foreground)
+    gsap.to(heroContent, {
+      x: mx * 5,
+      y: my * 3,
+      duration: 1.0,
+      ease: 'power2.out',
+      overwrite: 'auto'
+    });
+  }, { passive: true });
+}
+
+// ── GSAP Scroll Parallax ───────────────────────────────
+ScrollTrigger.create({
+  trigger: '#hero',
+  start: 'top top',
+  end: 'bottom top',
+  scrub: 0.5,
+  onUpdate: (self) => {
+    const p = self.progress;
+    gsap.set('.hero-content', {
+      y: p * -120,
+      opacity: 1 - p * 2
+    });
+    gsap.set('.hero-pacman', {
+      y: p * -60,
+      opacity: 0.18 * (1 - p * 1.5)
+    });
+    gsap.set('.hero-pellets', {
+      opacity: 1 - p * 2
+    });
+  }
+});
+
+// ── Smooth scroll for all internal anchors ──────────────
+document.querySelectorAll('a[href^="#"]').forEach(el => {
+  el.addEventListener('click', (e) => {
+    const target = document.querySelector(el.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+});
+
+// ── Fade scroll arrow ──────────────────────────────────
+const scrollArrow = document.querySelector('.scroll-arrow');
+if (scrollArrow) {
+  let faded = false;
+  window.addEventListener('scroll', () => {
+    if (!faded && window.scrollY > 80) {
+      scrollArrow.style.opacity = '0';
+      scrollArrow.style.transition = 'opacity 0.6s';
+      faded = true;
+    }
+  }, { passive: true });
+}
+
+// ── Section fade-in on scroll ──────────────────────────
+document.querySelectorAll('#about, #how, #links').forEach(section => {
+  gsap.from(section, {
+    opacity: 0, y: 40,
+    duration: 0.9, ease: 'power3.out',
+    scrollTrigger: {
+      trigger: section,
+      start: 'top 85%',
+      once: true
+    }
+  });
+});

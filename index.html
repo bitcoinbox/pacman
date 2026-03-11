@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>$PACMAN — The Arcade Memecoin</title>
+  <link rel="shortcut icon" href="/favicon.png" />
+  <meta name="description" content="$PACMAN — The premium arcade memecoin. Play the game. Join the movement." />
+  <style>
+    @font-face {
+      font-family: 'Press Start 2P';
+      font-style: normal;
+      font-weight: 400;
+      src: url('/fonts/press-start-2p-v9-latin-regular.woff2') format('woff2'),
+           url('/fonts/press-start-2p-v9-latin-regular.woff') format('woff');
+    }
+
+    :root {
+      --gold: #FFE000;
+      --cyan: #00FFFF;
+      --pink: #FFB8FF;
+      --red: #FF4444;
+      --blue: #2121DE;
+      --dark: #08080e;
+      --darker: #040407;
+      --glow-blue: rgba(33, 33, 222, 0.15);
+    }
+
+    /* ─── KEYFRAMES ─── */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    @keyframes glowPulse {
+      0%, 100% { text-shadow: 0 0 20px var(--gold), 0 0 60px var(--gold); }
+      50% { text-shadow: 0 0 40px var(--gold), 0 0 80px var(--gold), 0 0 120px rgba(255,224,0,0.3); }
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      60% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    @keyframes driftLeft {
+      from { transform: translateX(100vw); }
+      to { transform: translateX(-200px); }
+    }
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+    @keyframes borderGlow {
+      0%, 100% { box-shadow: 0 0 30px var(--glow-blue), 0 0 60px rgba(33,33,222,0.08), inset 0 0 30px rgba(33,33,222,0.03); }
+      50% { box-shadow: 0 0 50px rgba(33,33,222,0.25), 0 0 100px rgba(33,33,222,0.12), inset 0 0 40px rgba(33,33,222,0.05); }
+    }
+    @keyframes scrollArrow {
+      0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.3; }
+      50% { transform: translateX(-50%) translateY(10px); opacity: 0.7; }
+    }
+    @keyframes pelletDrift {
+      0% { transform: translateX(0) scale(1); opacity: 0.9; }
+      80% { opacity: 0.6; }
+      100% { transform: translateX(-220px) scale(0.3); opacity: 0; }
+    }
+    @keyframes crtFlicker {
+      0% { opacity: 0.03; }
+      50% { opacity: 0.05; }
+      100% { opacity: 0.03; }
+    }
+    @keyframes btnSheen {
+      0% { left: -100%; }
+      100% { left: 200%; }
+    }
+    /* ─── RESET ─── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--darker);
+      font-family: 'Press Start 2P', monospace;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* ────────────────────────────────────
+       NAVBAR
+    ──────────────────────────────────── */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 18px 32px;
+      transition: all 0.35s ease;
+      background: transparent;
+    }
+    .navbar.scrolled {
+      padding: 12px 32px;
+      background: rgba(4, 4, 7, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(33, 33, 222, 0.1);
+      box-shadow: 0 2px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.75em;
+      color: var(--gold);
+      text-decoration: none;
+      text-shadow: 0 0 12px rgba(255, 224, 0, 0.3);
+      letter-spacing: 2px;
+      flex-shrink: 0;
+      transition: text-shadow 0.3s ease;
+    }
+    .nav-logo:hover {
+      text-shadow: 0 0 20px rgba(255, 224, 0, 0.5), 0 0 40px rgba(255, 224, 0, 0.2);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      margin-left: auto;
+    }
+    .nav-links a {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.38em;
+      color: #666;
+      text-decoration: none;
+      letter-spacing: 2px;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan);
+      transition: width 0.25s ease;
+    }
+    .nav-links a:hover {
+      color: var(--cyan);
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-wallet-wrap {
+      margin-left: 28px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .wallet-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.35em;
+      color: var(--cyan);
+      background: transparent;
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 4px;
+      padding: 10px 18px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .wallet-btn:hover {
+      border-color: rgba(0, 255, 255, 0.6);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.15), inset 0 0 12px rgba(0, 255, 255, 0.04);
+      color: #fff;
+      text-shadow: 0 0 8px var(--cyan);
+    }
+    .wallet-btn.connected {
+      border-color: rgba(0, 255, 255, 0.5);
+      color: var(--gold);
+      text-shadow: 0 0 8px rgba(255, 224, 0, 0.3);
+    }
+    .wallet-btn.connected:hover {
+      border-color: rgba(255, 224, 0, 0.5);
+      box-shadow: 0 0 20px rgba(255, 224, 0, 0.12);
+    }
+
+    /* Wallet dropdown */
+    .wallet-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: rgba(8, 8, 14, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 255, 255, 0.15);
+      border-radius: 6px;
+      padding: 6px;
+      min-width: 180px;
+      z-index: 110;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      animation: fadeInUp 0.2s ease-out;
+    }
+    .wallet-dd-item {
+      display: block;
+      width: 100%;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.32em;
+      color: #999;
+      background: transparent;
+      border: none;
+      padding: 12px 14px;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      letter-spacing: 1px;
+    }
+    .wallet-dd-item:hover {
+      background: rgba(0, 255, 255, 0.06);
+      color: var(--cyan);
+    }
+    .wallet-dd-item.disconnect {
+      color: #666;
+    }
+    .wallet-dd-item.disconnect:hover {
+      color: var(--red);
+      background: rgba(255, 68, 68, 0.06);
+    }
+    .wallet-dd-addr {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.28em;
+      color: #555;
+      padding: 10px 14px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 4px;
+      word-break: break-all;
+      line-height: 1.8;
+    }
+
+    /* Mobile nav toggle */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 1.4em;
+      cursor: pointer;
+      padding: 4px 8px;
+      margin-left: auto;
+      transition: color 0.2s;
+    }
+    .nav-toggle:hover { color: var(--cyan); }
+
+    @media (max-width: 768px) {
+      .navbar { padding: 14px 16px; }
+      .navbar.scrolled { padding: 10px 16px; }
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        background: rgba(4, 4, 7, 0.95);
+        backdrop-filter: blur(16px);
+        padding: 16px 24px;
+        gap: 18px;
+        border-bottom: 1px solid rgba(33, 33, 222, 0.1);
+      }
+      .nav-links.open { display: flex; }
+      .nav-toggle { display: block; }
+      .nav-wallet-wrap { margin-left: 0; }
+      .wallet-btn { font-size: 0.3em; padding: 8px 14px; }
+    }
+
+    /* ────────────────────────────────────
+       HERO SECTION — Title + Branding
+    ──────────────────────────────────── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 40%, #080818 0%, var(--darker) 70%);
+    }
+
+    /* Three.js hero canvas */
+    #hero-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    #hero-canvas canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* SVG Pac-Man — behind text as background focal element */
+    .hero-pacman {
+      position: absolute;
+      z-index: 1;
+      width: 280px;
+      height: 280px;
+      aspect-ratio: 1 / 1;
+      right: calc(50% - 320px);
+      top: calc(50% - 80px);
+      opacity: 0;
+      filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.3));
+      animation: pacFloat 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .hero-pacman svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    @keyframes pacFloat {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1) translateY(-12px); }
+    }
+
+    /* Pellet trail drifting toward Pac-Man */
+    .hero-pellets {
+      position: absolute;
+      z-index: 1;
+      right: calc(50% - 520px);
+      top: calc(50% - 20px);
+      width: 260px;
+      height: 40px;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .hero-pellet {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 6px rgba(255, 224, 0, 0.6);
+      animation: pelletDrift 2.4s linear infinite;
+    }
+    .hero-pellet:nth-child(1) { top: 50%; right: 0; animation-delay: 0s; }
+    .hero-pellet:nth-child(2) { top: 50%; right: 50px; animation-delay: 0.4s; }
+    .hero-pellet:nth-child(3) { top: 50%; right: 100px; animation-delay: 0.8s; }
+    .hero-pellet:nth-child(4) { top: 50%; right: 150px; animation-delay: 1.2s; }
+    .hero-pellet:nth-child(5) { top: 50%; right: 200px; animation-delay: 1.6s; }
+
+    /* Scoreboard above title */
+    .hero-scoreboard {
+      font-size: 0.4em;
+      color: #fff;
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 8px rgba(255,255,255,0.2);
+      opacity: 0;
+    }
+    .hero-score-value {
+      color: var(--gold);
+      text-shadow: 0 0 10px rgba(255,224,0,0.3);
+    }
+
+    /* CRT scanline overlay */
+    #hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.06) 2px,
+        rgba(0, 0, 0, 0.06) 4px
+      );
+      animation: crtFlicker 4s ease-in-out infinite;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 700px;
+      padding: 0 24px;
+    }
+
+    /* Soft dark vignette behind text for readability */
+    .hero-content::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: -80px;
+      right: -80px;
+      bottom: -40px;
+      background: radial-gradient(ellipse at center, rgba(4,4,7,0.7) 0%, rgba(4,4,7,0.3) 50%, transparent 80%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .hero-label {
+      font-size: 0.55em;
+      color: var(--cyan);
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      text-shadow: 0 0 12px rgba(0,255,255,0.4);
+      opacity: 0;
+    }
+
+    .hero-title {
+      font-size: clamp(2.2em, 8vw, 4.5em);
+      color: var(--gold);
+      margin-bottom: 18px;
+      letter-spacing: 8px;
+      line-height: 1.15;
+      opacity: 0;
+      text-shadow: 0 0 15px rgba(255,224,0,0.4), 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .hero-token {
+      font-size: clamp(0.55em, 2vw, 0.9em);
+      color: var(--cyan);
+      text-shadow: 0 0 12px rgba(0,255,255,0.35);
+      margin-bottom: 44px;
+      letter-spacing: 6px;
+      opacity: 0;
+    }
+
+    .hero-tagline {
+      font-size: 0.55em;
+      color: #999;
+      line-height: 2.8;
+      margin-bottom: 52px;
+      opacity: 0;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+    }
+
+    .hero-btn {
+      display: inline-block;
+      padding: 16px 36px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.6em;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      letter-spacing: 2px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-btn:active {
+      transform: scale(0.95) !important;
+    }
+    /* Sheen effect on hover */
+    .hero-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: none;
+    }
+    .hero-btn:hover::after {
+      animation: btnSheen 0.6s ease-out;
+    }
+
+    .hero-btn.play {
+      background: var(--gold);
+      color: #000;
+      border: 2px solid rgba(255,224,0,0.6);
+      box-shadow: 0 0 30px rgba(255,224,0,0.3), 0 0 60px rgba(255,224,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .hero-btn.play:hover {
+      box-shadow: 0 0 50px rgba(255,224,0,0.5), 0 0 100px rgba(255,224,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3);
+      transform: translateY(-3px);
+      border-color: rgba(255,224,0,0.9);
+    }
+
+    .hero-btn.buy {
+      background: transparent;
+      color: var(--cyan);
+      border: 2px solid rgba(0,255,255,0.3);
+      box-shadow: 0 0 15px rgba(0,255,255,0.1), inset 0 0 15px rgba(0,255,255,0.03);
+    }
+    .hero-btn.buy:hover {
+      background: rgba(0,255,255,0.06);
+      box-shadow: 0 0 35px rgba(0,255,255,0.25), inset 0 0 25px rgba(0,255,255,0.05);
+      transform: translateY(-3px);
+      border-color: rgba(0,255,255,0.6);
+    }
+
+    .scroll-arrow {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.4em;
+      color: #333;
+      animation: scrollArrow 2s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    /* ────────────────────────────────────
+       GAME SECTION
+    ──────────────────────────────────── */
+    #game-section {
+      position: relative;
+      padding: 60px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--dark);
+      overflow: hidden;
+    }
+
+    /* Subtle radial glow behind game */
+    #game-section::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(33,33,222,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .game-section-label {
+      font-size: 0.5em;
+      color: #444;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .game-frame {
+      position: relative;
+      z-index: 2;
+      padding: 3px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(33,33,222,0.2), rgba(0,255,255,0.1), rgba(33,33,222,0.2));
+      animation: borderGlow 4s ease-in-out infinite;
+    }
+
+    .game-frame-inner {
+      border-radius: 6px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #game-container {
+      position: relative;
+      line-height: 0;
+    }
+
+    #game-container canvas {
+      display: block;
+    }
+
+    /* ─── OVERLAY (in-game menus) ─── */
+    #overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      color: #fff;
+    }
+    #overlay.active { pointer-events: auto; }
+    #overlay .message {
+      text-align: center;
+      font-size: 1.2em;
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    .menu-screen .menu-title {
+      font-size: 2.4em;
+      color: var(--gold);
+      animation: glowPulse 2s ease-in-out infinite;
+      margin-bottom: 16px;
+      letter-spacing: 4px;
+    }
+    .menu-screen .menu-token {
+      font-size: 0.65em;
+      color: var(--cyan);
+      text-shadow: 0 0 15px var(--cyan);
+      margin-bottom: 36px;
+      letter-spacing: 2px;
+    }
+    .menu-screen .menu-high {
+      font-size: 0.6em;
+      color: #888;
+      margin-bottom: 14px;
+    }
+    .menu-screen .menu-start {
+      font-size: 0.75em;
+      animation: pulse 1.5s infinite;
+      color: #ccc;
+    }
+    .ready-text {
+      color: var(--gold);
+      font-size: 1.8em;
+      animation: popIn 0.4s ease-out;
+      text-shadow: 0 0 20px var(--gold);
+    }
+    .gameover-screen .go-title {
+      color: var(--red);
+      font-size: 1.8em;
+      margin-bottom: 24px;
+      text-shadow: 0 0 20px var(--red);
+    }
+    .gameover-screen .go-score { font-size: 0.85em; margin-bottom: 10px; }
+    .gameover-screen .go-high { font-size: 0.6em; color: var(--gold); margin-bottom: 28px; }
+    .gameover-screen .go-restart { font-size: 0.7em; animation: pulse 1.5s infinite; color: #ccc; }
+
+    .pause-text {
+      color: var(--cyan);
+      font-size: 2em;
+      text-shadow: 0 0 20px var(--cyan), 0 0 40px var(--cyan);
+      animation: glowPulse 2s ease-in-out infinite;
+      margin-bottom: 20px;
+    }
+    .pause-hint {
+      font-size: 0.6em;
+      color: #888;
+      animation: pulse 1.5s infinite;
+    }
+
+    .game-controls {
+      margin-top: 24px;
+      font-size: 0.4em;
+      color: #444;
+      letter-spacing: 2px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ────────────────────────────────────
+       DIVIDER
+    ──────────────────────────────────── */
+    .section-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 5%, var(--blue) 30%, var(--cyan) 50%, var(--blue) 70%, transparent 95%);
+      opacity: 0.25;
+    }
+
+    /* ────────────────────────────────────
+       ABOUT SECTION
+    ──────────────────────────────────── */
+    #about {
+      position: relative;
+      padding: 100px 24px;
+      text-align: center;
+      background: var(--darker);
+      overflow: hidden;
+    }
+
+    #about::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(33,33,222,0.05) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .about-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .about-label {
+      font-size: 0.5em;
+      color: var(--cyan);
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      text-shadow: 0 0 15px var(--cyan);
+    }
+
+    .about-title {
+      font-size: clamp(1.2em, 4vw, 2em);
+      color: var(--gold);
+      margin-bottom: 40px;
+      text-shadow: 0 0 30px rgba(255,224,0,0.2);
+    }
+
+    .about-text {
+      font-size: 0.5em;
+      line-height: 2.6;
+      color: #777;
+      max-width: 600px;
+      margin: 0 auto 48px;
+    }
+
+    .about-stats {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+    .stat-value {
+      display: block;
+      font-size: 1.4em;
+      color: var(--gold);
+      margin-bottom: 8px;
+      text-shadow: 0 0 15px rgba(255,224,0,0.3);
+    }
+    .stat-label {
+      font-size: 0.35em;
+      color: #555;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .token-badge {
+      display: inline-block;
+      padding: 14px 32px;
+      border: 1px solid rgba(0,255,255,0.2);
+      border-radius: 6px;
+      font-size: 0.6em;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan);
+      background: rgba(0,255,255,0.03);
+      transition: all 0.3s ease;
+    }
+    .token-badge:hover {
+      border-color: rgba(0,255,255,0.5);
+      background: rgba(0,255,255,0.06);
+      box-shadow: 0 0 20px rgba(0,255,255,0.1);
+    }
+
+    /* ────────────────────────────────────
+       HOW IT WORKS
+    ──────────────────────────────────── */
+    #how {
+      padding: 80px 24px;
+      background: var(--dark);
+      overflow: hidden;
+    }
+
+    .how-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 40px;
+    }
+
+    .how-card {
+      text-align: center;
+      padding: 32px 20px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: all 0.3s ease;
+    }
+    .how-card:hover {
+      border-color: rgba(33,33,222,0.2);
+      background: rgba(33,33,222,0.03);
+      transform: translateY(-4px);
+    }
+
+    .how-icon {
+      font-size: 2em;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .how-title {
+      font-size: 0.5em;
+      color: var(--gold);
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .how-desc {
+      font-size: 0.35em;
+      color: #666;
+      line-height: 2.2;
+    }
+
+    /* ────────────────────────────────────
+       LINKS / CTA SECTION
+    ──────────────────────────────────── */
+    #links {
+      padding: 80px 24px 100px;
+      text-align: center;
+      background: var(--darker);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #links::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255,224,0,0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .links-title {
+      font-size: 0.9em;
+      color: #fff;
+      margin-bottom: 12px;
+      letter-spacing: 2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .links-sub {
+      font-size: 0.4em;
+      color: #555;
+      margin-bottom: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .links-grid {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .link-btn {
+      display: inline-block;
+      padding: 16px 32px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.5em;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.25s ease;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+    .link-btn.primary {
+      background: var(--gold);
+      color: #000;
+      box-shadow: 0 0 25px rgba(255,224,0,0.25);
+    }
+    .link-btn.primary:hover {
+      box-shadow: 0 0 40px rgba(255,224,0,0.45);
+      transform: translateY(-3px);
+    }
+    .link-btn.secondary {
+      background: transparent;
+      color: #888;
+      border: 1px solid #222;
+    }
+    .link-btn.secondary:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 20px rgba(0,255,255,0.12);
+      transform: translateY(-3px);
+    }
+
+    /* ────────────────────────────────────
+       FOOTER
+    ──────────────────────────────────── */
+    footer {
+      padding: 40px 24px;
+      text-align: center;
+      background: var(--darker);
+      border-top: 1px solid #0e0e0e;
+    }
+    footer p {
+      font-size: 0.35em;
+      color: #333;
+      line-height: 2.4;
+    }
+
+    /* ────────────────────────────────────
+       RESPONSIVE
+    ──────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hero-pacman { width: 180px; height: 180px; right: calc(50% - 180px); top: calc(50% - 60px); }
+      .hero-pellets { display: none; }
+      .hero-scoreboard { font-size: 0.35em; }
+      .hero-title { letter-spacing: 3px; }
+      .hero-btn { padding: 14px 24px; font-size: 0.5em; }
+      .about-stats { gap: 24px; }
+      .how-grid { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; }
+      .link-btn { padding: 14px 24px; font-size: 0.42em; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ NAVBAR ═══════════ -->
+  <nav id="navbar" class="navbar">
+    <div class="nav-inner">
+      <a class="nav-logo" href="#">$PACMAN</a>
+      <button class="nav-toggle" id="nav-toggle">&#9776;</button>
+      <div class="nav-links" id="nav-links">
+        <a href="#game-section">GAME</a>
+        <a href="#about">TOKEN</a>
+        <a href="#links">COMMUNITY</a>
+      </div>
+      <div class="nav-wallet-wrap">
+        <button class="wallet-btn" id="wallet-btn">CONNECT WALLET</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section id="hero">
+    <div id="hero-canvas"></div>
+
+    <!-- SVG Pac-Man — behind text, offset as background focal element -->
+    <div class="hero-pacman">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="pac-grad" cx="40%" cy="38%" r="55%">
+            <stop offset="0%" stop-color="#FFE84D"/>
+            <stop offset="70%" stop-color="#FFD700"/>
+            <stop offset="100%" stop-color="#CCa800"/>
+          </radialGradient>
+        </defs>
+        <circle cx="50" cy="50" r="45" fill="url(#pac-grad)"/>
+        <polygon fill="#040407">
+          <animate attributeName="points"
+            values="50,50 100,48 100,52; 50,50 100,25 100,75; 50,50 100,48 100,52"
+            dur="0.5s" repeatCount="indefinite" />
+        </polygon>
+        <circle cx="38" cy="30" r="5.5" fill="#040407"/>
+        <circle cx="39" cy="29" r="2" fill="#fff" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <!-- Pellet trail drifting toward Pac-Man -->
+    <div class="hero-pellets">
+      <span class="hero-pellet"></span>
+      <span class="hero-pellet"></span>
+      <span class="hero-pellet"></span>
+      <span class="hero-pellet"></span>
+      <span class="hero-pellet"></span>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-scoreboard">HIGH SCORE: <span class="hero-score-value">0000000</span></div>
+      <div class="hero-label">THE ARCADE MEMECOIN</div>
+      <h1 class="hero-title">PAC-MAN</h1>
+      <div class="hero-token">$PACMAN</div>
+      <p class="hero-tagline">
+        Eat dots. Chase ghosts. Buy dips.<br>
+        The first memecoin you can actually play.
+      </p>
+      <div class="hero-cta">
+        <a class="hero-btn play" href="#game-section">PLAY NOW</a>
+        <a class="hero-btn buy" href="#" target="_blank">BUY $PACMAN</a>
+      </div>
+    </div>
+
+    <div class="scroll-arrow">&#x25BC;</div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ═══════════ GAME ═══════════ -->
+  <section id="game-section">
+    <div class="game-section-label">FEATURED GAME</div>
+    <div class="game-frame">
+      <div class="game-frame-inner">
+        <div id="game-container">
+          <div id="overlay"></div>
+        </div>
+      </div>
+    </div>
+    <div class="game-controls">ARROW KEYS / WASD TO MOVE</div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ═══════════ ABOUT ═══════════ -->
+  <section id="about">
+    <div class="about-grid">
+      <div class="about-label">WHAT IS $PACMAN</div>
+      <div class="about-title">Not a token with a landing page.<br>A game with a token.</div>
+      <p class="about-text">
+        $PACMAN is the arcade memecoin on Solana.<br>
+        A full premium game, not a JPEG.<br>
+        Built for degens who eat dots and buy dips.
+      </p>
+      <div class="about-stats">
+        <div class="stat">
+          <span class="stat-value">4</span>
+          <span class="stat-label">GHOST ENEMIES</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">224</span>
+          <span class="stat-label">DOTS PER LEVEL</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">4</span>
+          <span class="stat-label">UNIQUE MAZES</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">1</span>
+          <span class="stat-label">TOKEN</span>
+        </div>
+      </div>
+      <div class="token-badge">$PACMAN on Solana</div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ═══════════ HOW IT WORKS ═══════════ -->
+  <section id="how">
+    <div class="how-grid">
+      <div class="how-card">
+        <span class="how-icon" style="color:var(--gold)">&#x25CF;</span>
+        <div class="how-title">EAT DOTS</div>
+        <div class="how-desc">Navigate the maze, eat every pellet, dodge the ghosts. Classic arcade gameplay with premium visuals.</div>
+      </div>
+      <div class="how-card">
+        <span class="how-icon" style="color:var(--cyan)">&#x25B2;</span>
+        <div class="how-title">BUY $PACMAN</div>
+        <div class="how-desc">Pick up the token on Solana. Join the community of arcade degens. The game IS the product.</div>
+      </div>
+      <div class="how-card">
+        <span class="how-icon" style="color:var(--pink)">&#x2764;</span>
+        <div class="how-title">SPREAD IT</div>
+        <div class="how-desc">Share the game, share the token. The better the game, the stronger the brand.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ═══════════ LINKS ═══════════ -->
+  <section id="links">
+    <div class="links-title">JOIN THE MOVEMENT</div>
+    <div class="links-sub">GET IN EARLY. PLAY HARD.</div>
+    <div class="links-grid">
+      <a class="link-btn primary" href="#" target="_blank">BUY $PACMAN</a>
+      <a class="link-btn secondary" href="#" target="_blank">TWITTER / X</a>
+      <a class="link-btn secondary" href="#" target="_blank">TELEGRAM</a>
+      <a class="link-btn secondary" href="#" target="_blank">DEXSCREENER</a>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer>
+    <p>
+      $PACMAN is a memecoin with no intrinsic value or expectation of financial return.<br>
+      There is no formal team or roadmap. The coin is for entertainment purposes only.
+    </p>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
