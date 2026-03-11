@@ -1776,9 +1776,7 @@
           <div class="chart-placeholder-text">CHART COMING SOON</div>
           <div class="chart-placeholder-sub">DexScreener embed will appear here once the token is live</div>
         </div>
-        <!-- Uncomment and set the real pair address when live:
-        <iframe id="dexscreener-embed" src="https://dexscreener.com/solana/YOUR_PAIR_ADDRESS?embed=1&theme=dark" style="width:100%;height:100%;border:none;"></iframe>
-        -->
+        <!-- DexScreener iframe injected by TOKEN_CONFIG when live -->
       </div>
     </div>
   </section>
@@ -1829,9 +1827,45 @@
   </footer>
 
   <script>
+    // ═══════════ TOKEN CONFIG — UPDATE THESE ON LAUNCH ═══════════
+    const TOKEN_CONFIG = {
+      contractAddress: null,               // Set to CA string when live
+      dexscreenerPair: null,               // Set to pair address for chart
+      buyLink: null,                       // e.g. 'https://jup.ag/swap/SOL-PACMAN'
+      twitterLink: null,                   // e.g. 'https://x.com/pacman'
+      telegramLink: null,                  // e.g. 'https://t.me/pacman'
+      dexscreenerLink: null,               // e.g. 'https://dexscreener.com/solana/...'
+    };
+
+    // ── Apply config ──
+    if (TOKEN_CONFIG.contractAddress) {
+      document.getElementById('contract-addr').textContent = TOKEN_CONFIG.contractAddress;
+    }
+    if (TOKEN_CONFIG.dexscreenerPair) {
+      const placeholder = document.getElementById('chart-placeholder');
+      if (placeholder) placeholder.style.display = 'none';
+      const container = document.getElementById('chart-container');
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://dexscreener.com/solana/${TOKEN_CONFIG.dexscreenerPair}?embed=1&theme=dark`;
+      iframe.style.cssText = 'width:100%;height:100%;border:none;';
+      container.appendChild(iframe);
+    }
+    const linkMap = {
+      'BUY $PACMAN': TOKEN_CONFIG.buyLink,
+      'TWITTER / X': TOKEN_CONFIG.twitterLink,
+      'TELEGRAM': TOKEN_CONFIG.telegramLink,
+      'DEXSCREENER': TOKEN_CONFIG.dexscreenerLink,
+    };
+    document.querySelectorAll('.link-btn').forEach(a => {
+      const url = linkMap[a.textContent.trim()];
+      if (url) a.href = url;
+      else if (a.href === '#' || a.href.endsWith('#')) a.style.opacity = '0.4';
+    });
+
     // ── Copy contract address ──
     document.getElementById('copy-ca-btn')?.addEventListener('click', () => {
       const addr = document.getElementById('contract-addr').textContent;
+      if (addr === 'COMING_SOON') return;
       navigator.clipboard.writeText(addr).then(() => {
         const fb = document.getElementById('copy-feedback');
         fb.classList.add('show');
