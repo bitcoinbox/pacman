@@ -61,8 +61,16 @@ export default class Game {
     // Overlay element
     this._overlay = document.getElementById('overlay');
 
+    // Wallet / online features
+    this._wallet = null;
+    this._sessionId = null;
+
     this._setupEvents();
     this._setupPause();
+  }
+
+  setWallet(wallet) {
+    this._wallet = wallet;
   }
 
   async init() {
@@ -219,6 +227,7 @@ export default class Game {
 
   _startGame() {
     this.score.reset();
+    this._startSession();
     this._loadLevel(0);
     this._startReady();
     this.audio.play('intro');
@@ -423,6 +432,7 @@ export default class Game {
   _gameOver() {
     this.state = STATE.GAME_OVER;
     this.score.saveHighScore();
+    this._submitScore();
     this.audio.stopAll();
 
     this._overlay.classList.add('active');
@@ -452,5 +462,53 @@ export default class Game {
     };
     window.addEventListener('keydown', this._gameOverListener);
     window.addEventListener('touchend', this._gameOverTouchListener);
+  }
+
+  // ── Online session / score submission ──────────────
+
+  async _startSession() {
+    this._sessionId = null;
+    if (!this._wallet?.isAuthenticated()) return;
+    try {
+      const res = await fetch('/api/game/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this._wallet.getToken()}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) this._sessionId = data.sessionId;
+    } catch {}
+  }
+
+  async _submitScore() {
+    if (!this._sessionId || !this._wallet?.isAuthenticated()) return;
+    try {
+      const res = await fetch('/api/game/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this._wallet.getToken()}`,
+        },
+        body: JSON.stringify({
+          sessionId: this._sessionId,
+          score: this.score.score,
+          level: this.score.level,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.accepted) {
+        // Update local player data
+        const player = this._wallet.getPlayer();
+        if (player) {
+          player.bestScore = data.bestScore;
+          player.totalGames = data.totalGames;
+        }
+        // Dispatch event for leaderboard refresh
+        window.dispatchEvent(new CustomEvent('pacman:scoreSubmitted', { detail: data }));
+      }
+    } catch {}
+    this._sessionId = null;
   }
 }

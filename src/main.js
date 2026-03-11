@@ -21,8 +21,85 @@ if (heroCanvas) {
 
 // ── Wallet Connect ───────────────────────────────────────
 const walletBtn = document.getElementById('wallet-btn');
+let wallet = null;
 if (walletBtn) {
-  new Wallet(walletBtn);
+  wallet = new Wallet(walletBtn);
+  game.setWallet(wallet);
+}
+
+// ── Leaderboard ─────────────────────────────────────────
+const lbTable = document.getElementById('lb-table');
+const lbMyRank = document.getElementById('lb-my-rank');
+let lbPeriod = 'alltime';
+
+async function loadLeaderboard() {
+  if (!lbTable) return;
+  const walletAddr = wallet?.getAddress() || '';
+  try {
+    const res = await fetch(`/api/leaderboard?period=${lbPeriod}&limit=20&wallet=${walletAddr}`);
+    const data = await res.json();
+
+    // Render table
+    let html = `<div class="lb-row header">
+      <div class="lb-rank">#</div>
+      <div class="lb-player">PLAYER</div>
+      <div class="lb-score">SCORE</div>
+    </div>`;
+
+    if (data.entries.length === 0) {
+      html += '<div class="lb-empty">No scores yet. Be the first!</div>';
+    } else {
+      data.entries.forEach((e, i) => {
+        const name = e.nickname || 'ANON';
+        const shortAddr = e.wallet.slice(0, 4) + '...' + e.wallet.slice(-4);
+        html += `<div class="lb-row animate" style="animation-delay:${i * 0.05}s">
+          <div class="lb-rank">${e.rank}</div>
+          <div class="lb-player">
+            <span class="lb-player-name">${name}</span>
+            <span class="lb-player-addr">${shortAddr}</span>
+          </div>
+          <div class="lb-score">${e.score.toLocaleString()}</div>
+        </div>`;
+      });
+    }
+
+    lbTable.innerHTML = html;
+
+    // My rank
+    if (data.myRank && lbMyRank) {
+      lbMyRank.classList.add('visible');
+      document.getElementById('lb-my-name').textContent = data.myRank.nickname || 'ANON';
+      document.getElementById('lb-my-pos').textContent = `#${data.myRank.rank}`;
+      document.getElementById('lb-my-score').textContent = data.myRank.score.toLocaleString();
+    } else if (lbMyRank) {
+      lbMyRank.classList.remove('visible');
+    }
+  } catch {
+    if (lbTable) lbTable.innerHTML = '<div class="lb-empty">Failed to load leaderboard</div>';
+  }
+}
+
+// Tab switching
+document.querySelectorAll('.lb-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    lbPeriod = tab.dataset.period;
+    loadLeaderboard();
+  });
+});
+
+// Load on page load
+loadLeaderboard();
+
+// Refresh after score submission
+window.addEventListener('pacman:scoreSubmitted', () => {
+  setTimeout(loadLeaderboard, 500);
+});
+
+// Refresh when wallet connects
+if (wallet) {
+  wallet.onAuth(() => loadLeaderboard());
 }
 
 // ── Navbar scroll effect ─────────────────────────────────
@@ -222,7 +299,7 @@ if (scrollArrow) {
 }
 
 // ── Section fade-in on scroll ──────────────────────────
-document.querySelectorAll('#about, #how, #links').forEach(section => {
+document.querySelectorAll('#leaderboard, #about, #how, #links').forEach(section => {
   gsap.from(section, {
     opacity: 0, y: 40,
     duration: 0.9, ease: 'power3.out',
